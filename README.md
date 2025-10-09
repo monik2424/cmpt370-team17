@@ -3,21 +3,10 @@
 ## Quick overview (what's in this repo)
 
 - Next.js app in `src/app`
-- Authentication with `next-auth` (Discord provider configured)
+- Authentication with `next-auth` (here's the steps if you wanna try this Discord provider configured https://create.t3.gg/en/usage/first-steps)
 - Database + ORM: Prisma (schema in `prisma/schema.prisma`) using MySQL
 - Tailwind for styles
 - tRPC for type-safe server/client endpoints
-
-## Prerequisites
-
-Make sure you have these installed on your machine:
-
-- Node.js (v18 or newer recommended) and npm
-- Git
-- A MySQL server (local or remote) OR Docker (recommended if you don't want to install MySQL directly)
-- (Optional) Docker Desktop if you prefer running MySQL in a container
-
-If you don't have MySQL and want a quick local database with Docker, see the Docker instructions below.
 
 ## 1) Clone the repository
 
