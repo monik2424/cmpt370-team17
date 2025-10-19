@@ -73,10 +73,10 @@ export default function Home() {
             <span className="ml-1 text-sm text-white font-mono">Saskatoon Events</span>
           </div>
           <div className="hidden font-mono bg-white/5 md:flex gap-6 px-4 py-2 text-xs absolute left-1/2 text-white -translate-x-1/2">
-            <Link href="/home" className="px-3 py-2 hover:bg-white/10 transition">
+            <Link href="/" className="px-3 py-2 hover:bg-white/10 transition">
               Home
             </Link>
-            <Link href="/" className="px-3 py-2 hover:bg-white/10 transition">
+            <Link href="/events" className="px-3 py-2 hover:bg-white/10 transition">
               Events
             </Link>
             <Link href="/venues" className="px-3 py-2 hover:bg-white/10 transition">
@@ -89,10 +89,16 @@ export default function Home() {
 
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/login")}
               className="px-4 py-2 hover:bg-white/20 bg-white/5 text-xs text-white font-mono transition cursor-pointer"
             >
-              View Events ↗
+              Login
+            </button>
+            <button
+              onClick={() => router.push("/register")}
+              className="px-4 py-2 hover:bg-blue-700 bg-blue-600 text-xs text-white font-mono transition cursor-pointer"
+            >
+              Register
             </button>
           </div>
         </nav>

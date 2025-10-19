@@ -7,19 +7,23 @@ A modern full-stack web application for organizing private events in Saskatoon, 
 This application is designed to connect event hosts with local venues and service providers in Saskatoon. Unlike global platforms like Eventbrite, this focuses on private event coordination while offering flexibility to make events public if desired.
 
 ### Key Features
+- **User Authentication**: Secure registration and login with NextAuth.js
+- **Role-Based Access Control**: Support for Guests, Hosts, Providers, and Admins
 - **Event Creation**: Plan birthdays, meetings, parties, and private gatherings
 - **Venue Discovery**: Find restaurants, venues, and event spaces in Saskatoon
 - **Guest Management**: Send invitations, track RSVPs, and manage guest lists
 - **Service Providers**: Connect with caterers, entertainers, and event coordinators
-- **Calendar Integration**: Automatic sync with default calendar applications
+- **Calendar Integration**: Automatic sync with default calendar applications (planned)
 
 ## Technology Stack
 
-- **Frontend**: Next.js 15 with React 19
+- **Frontend**: Next.js 15 with React 19 (App Router)
 - **Styling**: Tailwind CSS 4 with custom components
 - **Database**: PostgreSQL with Prisma ORM
-- **Package Manager**: pnpm
-- **Containerization**: Docker Compose
+- **Authentication**: NextAuth.js with Credentials Provider
+- **Password Hashing**: bcryptjs
+- **Validation**: Zod
+- **Package Manager**: npm
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
 
@@ -28,8 +32,8 @@ This application is designed to connect event hosts with local venues and servic
 ### Prerequisites
 
 - Node.js 18+ 
-- Docker and Docker Compose
-- pnpm (install globally: `npm install -g pnpm`)
+- PostgreSQL 12+ (installed locally)
+- npm (comes with Node.js)
 
 ### Installation
 
@@ -41,38 +45,54 @@ This application is designed to connect event hosts with local venues and servic
 
 2. **Install dependencies**
    ```bash
-   pnpm install
+   npm install
    ```
 
-3. **Set up environment variables**
+3. **Set up PostgreSQL Database**
+   
+   Make sure PostgreSQL is running on your machine. Then create the database:
+   
    ```bash
-   # Create .env file (already exists)
-   # DATABASE_URL="postgresql://postgres@localhost:5433/cmpt370?schema=public"
+   # Connect to PostgreSQL (Windows)
+   psql -U postgres
+   
+   # Create the database
+   CREATE DATABASE cmpt370;
+   
+   # Exit psql
+   \q
    ```
 
-4. **Start the database**
-   ```bash
-   docker compose up
+4. **Set up environment variables**
+   
+   Create a `.env` file in the root directory:
+   
+   ```env
+   DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/cmpt370?schema=public"
+   AUTH_SECRET="your-super-secret-auth-key-change-in-production"
    ```
+   
+   Replace `YOUR_PASSWORD` with your PostgreSQL password.
 
 5. **Set up the database schema**
    ```bash
-   pnpm prisma db push
+   npx prisma db push
    ```
 
 6. **Generate Prisma client**
    ```bash
-   pnpm prisma generate
+   npx prisma generate
    ```
 
 7. **Start the development server**
    ```bash
-   pnpm dev
+   npm run dev
    ```
 
 8. **Open your browser**
-   - Main app: http://localhost:3000
-   - Landing page: http://localhost:3000/home
+   - Landing page: http://localhost:3000
+   - Login: http://localhost:3000/login
+   - Register: http://localhost:3000/register
 
 ## Project Structure
 
@@ -80,24 +100,39 @@ This application is designed to connect event hosts with local venues and servic
 cmpt370-team-17/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx          # Main events page
-│   │   ├── home/
-│   │   │   └── page.tsx      # Landing page
-│   │   └── layout.tsx        # Root layout
+│   │   ├── page.tsx                      # Landing page (public)
+│   │   ├── layout.tsx                    # Root layout with SessionProvider
+│   │   ├── providers.tsx                 # NextAuth SessionProvider wrapper
+│   │   ├── login/
+│   │   │   └── page.tsx                  # Login page
+│   │   ├── register/
+│   │   │   └── page.tsx                  # Registration page
+│   │   ├── dashboard/
+│   │   │   └── page.tsx                  # User dashboard (protected)
+│   │   ├── events/
+│   │   │   └── page.tsx                  # Events page (protected)
+│   │   └── api/
+│   │       ├── auth/
+│   │       │   └── [...nextauth]/
+│   │       │       └── route.ts          # NextAuth.js API route
+│   │       └── register/
+│   │           └── route.ts              # Registration API endpoint
 │   ├── components/
-│   │   ├── magicui/          # Custom animation components
-│   │   └── ui/               # Reusable UI components
+│   │   ├── magicui/                      # Custom animation components
+│   │   └── ui/                           # Reusable UI components
 │   ├── generated/
-│   │   └── prisma/           # Generated Prisma client
+│   │   └── prisma/                       # Generated Prisma client
 │   ├── lib/
-│   │   └── utils.ts          # Utility functions
-│   └── modules/
-│       └── db.ts             # Database connection
+│   │   ├── auth.ts                       # NextAuth.js configuration
+│   │   └── utils.ts                      # Utility functions
+│   ├── modules/
+│   │   └── db.ts                         # Prisma database connection
+│   └── middleware.ts                     # Route protection middleware
 ├── prisma/
-│   └── schema.prisma         # Database schema
-├── public/                    # Static assets
-├── docker-compose.yml         # Database setup
-└── package.json              # Dependencies
+│   └── schema.prisma                     # Database schema
+├── public/                                # Static assets
+├── .env                                   # Environment variables (not in git)
+└── package.json                          # Dependencies
 ```
 
 ## Database Schema

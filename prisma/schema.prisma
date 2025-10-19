@@ -2,14 +2,219 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+    url      = env("DATABASE_URL")
 }
+
+// Base User model - implements Alex's authentication requirements
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String    // Hashed password for Alex's security needs
+  image         String?
+  role          UserRole  @default(GUEST)
+  isVerified    Boolean   @default(false) // Email verification
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships to specific user types
+  host          Host?
+  guest         Guest?
+  provider      Provider?
+  
+  // Events created by this user (if Host)
+  createdEvents Event[]   @relation("EventHost")
+  
+  // Bookings made by this user
+  bookings      Booking[]
+
+  @@map("users")
+}
+
+// User roles for Alex's role-based access control
+enum UserRole {
+  GUEST
+  HOST
+  PROVIDER
+  ADMIN
+}
+
+// Host extends User - can create events
+model Host {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+  // Events created by this host
+  events Event[] @relation("HostEvents")
+
+  @@map("hosts")
+}
+
+// Guest extends User - can be invited to events
+model Guest {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId       String?
+  event         Event?    @relation(fields: [eventId], references: [id])
+  rsvpStatus    RSVPStatus @default(PENDING)
+  invitedAt     DateTime?
+  respondedAt   DateTime?
+  guestLocation String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("guests")
+}
+
+// Provider extends User - can provide services for events
+model Provider {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName         String
+  address              String?
+  phone                String?
+  email                String?
+  availabilitySchedule String?   // JSON string for schedule
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Bookings for this provider
+  bookings Booking[]
+  
+  // Events provided by this provider
+  events    Event[]    @relation("ProviderEvents")
+
+  @@map("providers")
+}
+
+// RSVP status enum
+enum RSVPStatus {
+  PENDING
+  ATTENDING
+  DECLINED
+  MAYBE
+}
+
+// Central Event model
+model Event {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  locationAtHost Boolean     @default(false)
+  location      String?
+  startAt       DateTime
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  attendeeCount Int         @default(0)
+  private       Boolean     @default(false)
+
+  // Relationships
+  hostId        String?
+  host          Host?       @relation("HostEvents", fields: [hostId], references: [id])
+  createdById   String?     // Alternative: direct user relationship
+  createdBy     User?       @relation("EventHost", fields: [createdById], references: [id])
+  
+  providerId    String?
+  provider      Provider?   @relation("ProviderEvents", fields: [providerId], references: [id])
+  
+  // Event relationships
+  guests        Guest[]
+  bookings      Booking[]
+  keywords      KeyWord[]   @relation("EventKeywords")
+  categoryTags  CategoryTag[] @relation("EventCategories")
+  map           Map?
+
+  @@map("events")
+}
+
+// Booking system
+model Booking {
+  id            String        @id @default(cuid())
+  eventId       String
+  event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  providerId    String
+  provider      Provider      @relation(fields: [providerId], references: [id])
+  userId        String?       // User who made the booking
+  user          User?         @relation(fields: [userId], references: [id])
+  bookingStatus BookingStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// Keywords for event search
+model KeyWord {
+  id     String  @id @default(cuid())
+  key    String  @unique
+  events Event[] @relation("EventKeywords")
+
+  @@map("keywords")
+}
+
+// Category tags for event organization
+model CategoryTag {
+  id          String  @id @default(cuid())
+  nameTag     String  @unique
+  description String?
+  events      Event[] @relation("EventCategories")
+
+  @@map("category_tags")
+}
+
+// Map data for event locations
+model Map {
+  id        String  @id @default(cuid())
+  latitude  Float
+  longitude Float
+  address   String?
+  eventId   String  @unique
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("maps")
+}
+
+// Email verification tokens for Alex's verification needs
+model VerificationToken {
+  id         String   @id @default(cuid())
+    token      String   @unique
+  email      String
+    expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@map("verification_tokens")
+}
+
+// Password reset tokens for Alex's password reset needs
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+// Keep the original Post model for backward compatibility
 model Post {
   id        String   @id @default(cuid())
   content   String
