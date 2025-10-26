@@ -14,7 +14,7 @@ export default async function EventsPage() {
   // If HOST, load their events
   const myEvents = isHost
     ? await db.event.findMany({
-        where: { createdById: user.id }, // relies on session.user.id (you already set this in auth callbacks)
+        where: { createdById: user.id }, // relies on session.user.id
         orderBy: { startAt: 'asc' },
         include: { categoryTags: true },
       })
@@ -77,7 +77,7 @@ export default async function EventsPage() {
                           <div className="text-sm text-gray-500">
                             {new Date(e.startAt).toLocaleString()} • {e.private ? "PRIVATE" : "PUBLIC"}
                           </div>
-                          {/* NEW: show description if present */}
+                          {/* show description if present */}
                           {e.description && (
                             <p className="mt-1 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                               {e.description}

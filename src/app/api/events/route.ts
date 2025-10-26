@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid date/time" }, { status: 400 });
     }
 
-    // Upsert category tags (you already have CategoryTag model with unique nameTag)
+    // Upsert category tags
     const tagRecords = await Promise.all(
       (data.tags ?? []).map((label) =>
         db.categoryTag.upsert({
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         description: data.description ?? null,
         startAt: startsAt,
         private: data.isPrivate,
-        createdById: user.id, // tie to current user (no Host row required)
+        createdById: user.id, // tie to current user
         // Link tags through the implicit M:N
         categoryTags: {
           connect: tagRecords.map((t) => ({ id: t.id })),
@@ -61,7 +61,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ event }, { status: 201 });
   } catch (e: any) {
-    // Zod validation errors
     if (e?.issues) {
       return NextResponse.json({ error: "Invalid input", details: e.issues }, { status: 400 });
     }
