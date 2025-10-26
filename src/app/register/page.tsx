@@ -8,7 +8,7 @@ export default function RegisterPage() {
     email: '',
     password: '',
     name: '',
-    role: 'GUEST' as 'GUEST' | 'HOST' | 'PROVIDER'
+    role: 'GUEST' as 'GUEST' | 'HOST' 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -125,7 +125,6 @@ export default function RegisterPage() {
               >
                 <option value="GUEST">Guest - Attend events</option>
                 <option value="HOST">Host - Create events</option>
-                <option value="PROVIDER">Provider - Offer services</option>
               </select>
             </div>
           </div>
