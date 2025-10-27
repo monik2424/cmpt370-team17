@@ -15,7 +15,6 @@ import { Box } from "lucide-react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "";
 
-// Center roughly on downtown Saskatoon
 const INITIAL_VIEW = {
   longitude: -106.67,
   latitude: 52.13,
@@ -24,7 +23,6 @@ const INITIAL_VIEW = {
   pitch: 0,
 };
 
-// Saskatoon events data
 const saskatoonEvents = [
   {
     id: 1,
@@ -138,7 +136,6 @@ type Props = {
   };
 };
 
-// Zoom / 3D control buttons
 function MapControls({
   onZoomIn,
   onZoomOut,
@@ -150,23 +147,20 @@ function MapControls({
 }) {
   return (
     <div className="absolute right-4 top-4 z-40 flex flex-col gap-2">
-      {/* Zoom In */}
       <button
         onClick={onZoomIn}
         className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
       >
-        <span className="text-lg font-medium leading-none">+</span>
+        +
       </button>
 
-      {/* Zoom Out */}
       <button
         onClick={onZoomOut}
         className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
       >
-        <span className="text-lg font-medium leading-none">−</span>
+        −
       </button>
 
-      {/* 3D Toggle */}
       <button
         onClick={onToggle3D}
         className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
@@ -179,32 +173,22 @@ function MapControls({
 }
 
 export default function MapPageClient({ user }: Props) {
-  // which event pin is "active"
   const [activeMarkerId, setActiveMarkerId] = useState<number | null>(null);
-
-  // are we in tilted 3D mode
   const [is3D, setIs3D] = useState(false);
 
-  // ref to Mapbox map instance (NOT React state anymore)
   const mapRef = useRef<MapRef | null>(null);
-
-  // callback ref passed to <MapboxMap ref={...}/>
   const setMapRef = useCallback((instance: MapRef | null) => {
     mapRef.current = instance;
   }, []);
 
-  // derive the full active event
   const activeEvent = useMemo(
     () => saskatoonEvents.find((e) => e.id === activeMarkerId) ?? null,
     [activeMarkerId]
   );
 
-  // marker click toggles popup
-  const handleMarkerClick = (id: number) => {
+  const handleMarkerClick = (id: number) =>
     setActiveMarkerId((prev) => (prev === id ? null : id));
-  };
 
-  // zoom handlers
   const handleZoomIn = useCallback(() => {
     mapRef.current?.zoomIn({ duration: 200 });
   }, []);
@@ -213,28 +197,23 @@ export default function MapPageClient({ user }: Props) {
     mapRef.current?.zoomOut({ duration: 200 });
   }, []);
 
-  // Add 3D buildings layer under label layer
+  type MaybeSymbolLayer = {
+    id: string;
+    type?: string;
+    layout?: {
+      ["text-field"]?: unknown;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+
   const add3DBuildingsLayer = useCallback(() => {
     if (!mapRef.current) return;
     const map = mapRef.current.getMap();
 
-    // Don't add twice
     if (map.getLayer("3d-buildings")) return;
 
-    // Type for just the fields we care about in style layers
-    type MaybeSymbolLayer = {
-      id: string;
-      type?: string;
-      layout?: {
-        ["text-field"]?: unknown;
-        [key: string]: unknown;
-      };
-      [key: string]: unknown;
-    };
-
     const layers = map.getStyle().layers as MaybeSymbolLayer[];
-
-    // Find first symbol layer that uses text, so we can insert below it
     const labelLayerId = layers.find(
       (layer) =>
         layer.type === "symbol" &&
@@ -277,17 +256,14 @@ export default function MapPageClient({ user }: Props) {
     );
   }, []);
 
-  // Remove 3D buildings layer
   const remove3DBuildingsLayer = useCallback(() => {
     if (!mapRef.current) return;
     const map = mapRef.current.getMap();
     if (map.getLayer("3d-buildings")) {
       map.removeLayer("3d-buildings");
     }
-    // Mapbox's "composite" source stays; we don't touch it
   }, []);
 
-  // Toggle 3D camera + extrusion layer
   const handleToggle3D = useCallback(() => {
     if (!mapRef.current) return;
     const map = mapRef.current.getMap();
@@ -296,7 +272,6 @@ export default function MapPageClient({ user }: Props) {
       const going3D = !prev;
 
       if (going3D) {
-        // enter 3D: tilt & rotate camera, add extruded buildings
         map.easeTo({
           pitch: 60,
           bearing: 45,
@@ -305,7 +280,6 @@ export default function MapPageClient({ user }: Props) {
         });
         add3DBuildingsLayer();
       } else {
-        // exit 3D: reset camera, remove extruded buildings
         map.easeTo({
           pitch: 0,
           bearing: 0,
@@ -319,74 +293,81 @@ export default function MapPageClient({ user }: Props) {
     });
   }, [add3DBuildingsLayer, remove3DBuildingsLayer]);
 
-  // If style reloads while in 3D, re-add extrusion layer
   useEffect(() => {
-    if (!mapRef.current) return;
-    const map = mapRef.current.getMap();
+  // grab the map instance once
+  const mapInstance = mapRef.current?.getMap();
+  if (!mapInstance) {
+    return;
+  }
 
-    const handleStyleLoad = () => {
-      if (is3D) {
-        add3DBuildingsLayer();
-      }
-    };
+  const handleStyleLoad = () => {
+    if (is3D) {
+      add3DBuildingsLayer();
+    }
+  };
 
-    map.on("style.load", handleStyleLoad);
-    return () => {
-      map.off("style.load", handleStyleLoad);
-    };
-  }, [is3D, add3DBuildingsLayer]);
+  mapInstance.on("style.load", handleStyleLoad);
+
+  return () => {
+    mapInstance.off("style.load", handleStyleLoad);
+  };
+}, [is3D, add3DBuildingsLayer]);
+
+  // shared shell so nav/header/map align
+  const PAGE_SHELL_CLASSES =
+    "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Nav Bar */}
-      <nav className="bg-white shadow dark:bg-gray-800">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between">
+      {/* NAVBAR */}
+      <nav className="bg-[#1f2937] text-white shadow dark:bg-gray-800">
+        <div className={PAGE_SHELL_CLASSES}>
+          <div className="flex h-16 items-center justify-between">
+            {/* left side */}
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h1 className="text-xl font-semibold text-white">
                 Saskatoon Events
               </h1>
 
               <div className="hidden space-x-4 md:flex">
                 <a
                   href="/dashboard"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
                 >
                   Dashboard
                 </a>
                 <a
                   href="/events"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
                 >
                   Events
                 </a>
                 <a
                   href="/map"
-                  className="rounded-md bg-gray-200 px-3 py-2 text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                  className="rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text-white"
                 >
                   Map
                 </a>
               </div>
             </div>
 
+            {/* right side */}
             <div className="flex items-center">
-              <span className="mr-4 text-sm text-gray-700 dark:text-gray-300">
-                {user?.name}
-              </span>
+              <span className="text-sm text-gray-300">{user?.name}</span>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Header stats */}
-      <header className="absolute left-0 right-0 top-16 z-20 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-4">
+      {/* HEADER / STATS BAR with restored styling */}
+      <header className="border-b border-border bg-background/95 backdrop-blur-sm dark:bg-black">
+        <div className={PAGE_SHELL_CLASSES + " py-4"}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-2xl font-bold text-foreground dark:text-white">
                 EventFinder
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground text-gray-500 dark:text-gray-400">
                 Discover events in your area
               </p>
             </div>
@@ -394,16 +375,19 @@ export default function MapPageClient({ user }: Props) {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
+                  <div className="text-2xl font-bold text-primary text-white dark:text-white">
                     {saskatoonEvents.length}
                   </div>
-                  <div className="text-xs text-muted-foreground">Events</div>
+                  <div className="text-xs text-muted-foreground text-gray-400">
+                    Events
+                  </div>
                 </div>
+
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
+                  <div className="text-2xl font-bold text-primary text-white dark:text-white">
                     {saskatoonEvents.filter((e) => e.isTracking).length}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground text-gray-400">
                     Tracking
                   </div>
                 </div>
@@ -413,79 +397,84 @@ export default function MapPageClient({ user }: Props) {
         </div>
       </header>
 
-      {/* Map section */}
-      <main className="flex-1 pt-[7rem]">
-        <div className="container mx-auto h-[calc(100vh-8rem)] px-6 pb-6">
-          {!MAPBOX_TOKEN ? (
-            <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-muted-foreground text-sm text-muted-foreground">
-              this is a test commit
-            </div>
-          ) : (
-            <div className="relative h-full w-full">
-              <MapboxMap
-                ref={setMapRef}
-                mapboxAccessToken={MAPBOX_TOKEN}
-                initialViewState={INITIAL_VIEW}
-                // stick with default street style in BOTH modes
-                mapStyle="mapbox://styles/mapbox/streets-v12"
-                style={{ width: "100%", height: "100%" }}
-              >
-                {/* markers */}
-                {saskatoonEvents.map((event) => (
-                  <Marker
-                    key={event.id}
-                    longitude={event.lng}
-                    latitude={event.lat}
-                    anchor="bottom"
-                  >
-                    <div className="flex flex-col items-center">
-                      <button
-                        onClick={() => handleMarkerClick(event.id)}
-                        className="flex flex-col items-center focus:outline-none"
+      {/* MAP AREA */}
+      <main className="flex flex-1 bg-gray-900/10 py-4 dark:bg-gray-900">
+        <div className={PAGE_SHELL_CLASSES + " flex w-full"}>
+          <div className="relative flex-1 rounded-md border border-border bg-black/5 shadow-sm dark:bg-black/20">
+            {!MAPBOX_TOKEN ? (
+              <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-muted-foreground text-sm text-muted-foreground">
+                Missing Mapbox token
+              </div>
+            ) : (
+              <div className="relative h-full w-full">
+                <MapboxMap
+                  ref={setMapRef}
+                  mapboxAccessToken={MAPBOX_TOKEN}
+                  initialViewState={INITIAL_VIEW}
+                  mapStyle="mapbox://styles/mapbox/streets-v12"
+                  style={{ width: "100%", height: "100%" }}
+                >
+                  {/* markers */}
+                  {saskatoonEvents.map((event) => (
+                    <Marker
+                      key={event.id}
+                      longitude={event.lng}
+                      latitude={event.lat}
+                      anchor="bottom"
+                    >
+                      <div className="flex flex-col items-center">
+                        <button
+                          onClick={() => handleMarkerClick(event.id)}
+                          className="flex flex-col items-center focus:outline-none"
+                        >
+                          <EventMarker
+                            type={event.type}
+                            size="md"
+                            isActive={activeMarkerId === event.id}
+                            isTracking={event.isTracking}
+                          />
+
+                          {activeMarkerId === event.id && (
+                            <p className="mt-1 max-w-[160px] rounded-md bg-white/90 px-2 py-1 text-center text-[11px] font-medium leading-snug text-black shadow dark:bg-black/90 dark:text-white">
+                              {event.title}
+                            </p>
+                          )}
+                        </button>
+                      </div>
+                    </Marker>
+                  ))}
+
+                  {/* popup overlay back to top-left gutter */}
+                  {activeEvent && (
+                    <div className="pointer-events-none absolute top-4 left-0 z-30">
+                      <div
+                        className={
+                          PAGE_SHELL_CLASSES +
+                          " pointer-events-auto max-w-xl"
+                        }
                       >
-                        <EventMarker
-                          type={event.type}
-                          size="md"
-                          isActive={activeMarkerId === event.id}
-                          isTracking={event.isTracking}
+                        <EventPopup
+                          title={activeEvent.title}
+                          description={activeEvent.description}
+                          date={activeEvent.date}
+                          time={activeEvent.time}
+                          location={activeEvent.location}
+                          attendees={activeEvent.attendees}
+                          onClose={() => setActiveMarkerId(null)}
                         />
-
-                        {activeMarkerId === event.id && (
-                          <p className="mt-1 max-w-[160px] rounded-md bg-white/90 px-2 py-1 text-center text-[11px] font-medium leading-snug text-black shadow dark:bg-black/90 dark:text-white">
-                            {event.title}
-                          </p>
-                        )}
-                      </button>
+                      </div>
                     </div>
-                  </Marker>
-                ))}
+                  )}
+                </MapboxMap>
 
-                {/* popup overlay (top-left of map) */}
-                {activeEvent && (
-                  <div className="pointer-events-none absolute left-4 top-4 z-30 max-w-xl">
-                    <div className="pointer-events-auto">
-                      <EventPopup
-                        title={activeEvent.title}
-                        description={activeEvent.description}
-                        date={activeEvent.date}
-                        time={activeEvent.time}
-                        location={activeEvent.location}
-                        attendees={activeEvent.attendees}
-                        onClose={() => setActiveMarkerId(null)}
-                      />
-                    </div>
-                  </div>
-                )}
-              </MapboxMap>
-
-              {/* controls overlay */}
-              <MapControls
-                onZoomIn={handleZoomIn}
-                onZoomOut={handleZoomOut}
-                onToggle3D={handleToggle3D}
-              />
-            </div>
-          )}
+                <MapControls
+                  onZoomIn={handleZoomIn}
+                  onZoomOut={handleZoomOut}
+                  onToggle3D={handleToggle3D}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
