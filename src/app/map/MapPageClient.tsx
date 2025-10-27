@@ -1,25 +1,34 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import MapboxMap, { Marker, MapRef } from "react-map-gl/mapbox";
 import EventMarker from "./EventMarker";
 import EventPopup from "./EventPopup";
+import { Box } from "lucide-react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "";
 
-// center camera roughly on downtown Saskatoon
+// Center roughly on downtown Saskatoon
 const INITIAL_VIEW = {
   longitude: -106.67,
   latitude: 52.13,
   zoom: 13,
+  bearing: 0,
+  pitch: 0,
 };
 
 // Saskatoon events data
 const saskatoonEvents = [
   {
     id: 1,
-    title: "Sarah's Birthday Party",
+    title: "Naresh's Birthday Party",
     type: "birthday",
     date: "2025-10-15",
     time: "7:00 PM",
@@ -129,58 +138,203 @@ type Props = {
   };
 };
 
-// --- small internal component for zoom buttons ---
+// Zoom / 3D control buttons
 function MapControls({
   onZoomIn,
   onZoomOut,
+  onToggle3D,
 }: {
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onToggle3D: () => void;
 }) {
   return (
     <div className="absolute right-4 top-4 z-40 flex flex-col gap-2">
+      {/* Zoom In */}
       <button
         onClick={onZoomIn}
         className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
       >
-        <span className="text-lg leading-none font-medium">+</span>
+        <span className="text-lg font-medium leading-none">+</span>
       </button>
+
+      {/* Zoom Out */}
       <button
         onClick={onZoomOut}
         className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
       >
-        <span className="text-lg leading-none font-medium">−</span>
+        <span className="text-lg font-medium leading-none">−</span>
+      </button>
+
+      {/* 3D Toggle */}
+      <button
+        onClick={onToggle3D}
+        className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
+        title="Toggle 3D"
+      >
+        <Box className="h-5 w-5" />
       </button>
     </div>
   );
 }
 
 export default function MapPageClient({ user }: Props) {
-  // track active marker id
+  // which event pin is "active"
   const [activeMarkerId, setActiveMarkerId] = useState<number | null>(null);
 
-  // ref to the map instance so we can imperatively zoom
-  const [mapRef, setMapRef] = useState<MapRef | null>(null);
+  // are we in tilted 3D mode
+  const [is3D, setIs3D] = useState(false);
 
+  // ref to Mapbox map instance (NOT React state anymore)
+  const mapRef = useRef<MapRef | null>(null);
+
+  // callback ref passed to <MapboxMap ref={...}/>
+  const setMapRef = useCallback((instance: MapRef | null) => {
+    mapRef.current = instance;
+  }, []);
+
+  // derive the full active event
   const activeEvent = useMemo(
     () => saskatoonEvents.find((e) => e.id === activeMarkerId) ?? null,
     [activeMarkerId]
   );
 
+  // marker click toggles popup
   const handleMarkerClick = (id: number) => {
     setActiveMarkerId((prev) => (prev === id ? null : id));
   };
 
   // zoom handlers
   const handleZoomIn = useCallback(() => {
-    if (!mapRef) return;
-    mapRef.zoomIn({ duration: 200 });
-  }, [mapRef]);
+    mapRef.current?.zoomIn({ duration: 200 });
+  }, []);
 
   const handleZoomOut = useCallback(() => {
-    if (!mapRef) return;
-    mapRef.zoomOut({ duration: 200 });
-  }, [mapRef]);
+    mapRef.current?.zoomOut({ duration: 200 });
+  }, []);
+
+  // Add 3D buildings layer under label layer
+  const add3DBuildingsLayer = useCallback(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+
+    // Don't add twice
+    if (map.getLayer("3d-buildings")) return;
+
+    // Type for just the fields we care about in style layers
+    type MaybeSymbolLayer = {
+      id: string;
+      type?: string;
+      layout?: {
+        ["text-field"]?: unknown;
+        [key: string]: unknown;
+      };
+      [key: string]: unknown;
+    };
+
+    const layers = map.getStyle().layers as MaybeSymbolLayer[];
+
+    // Find first symbol layer that uses text, so we can insert below it
+    const labelLayerId = layers.find(
+      (layer) =>
+        layer.type === "symbol" &&
+        layer.layout &&
+        layer.layout["text-field"]
+    )?.id;
+
+    map.addLayer(
+      {
+        id: "3d-buildings",
+        source: "composite",
+        "source-layer": "building",
+        filter: ["==", "extrude", "true"],
+        type: "fill-extrusion",
+        minzoom: 15,
+        paint: {
+          "fill-extrusion-color": "#aaa",
+          "fill-extrusion-height": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            15,
+            0,
+            16,
+            ["get", "height"],
+          ],
+          "fill-extrusion-base": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            15,
+            0,
+            16,
+            ["get", "min_height"],
+          ],
+          "fill-extrusion-opacity": 0.8,
+        },
+      },
+      labelLayerId
+    );
+  }, []);
+
+  // Remove 3D buildings layer
+  const remove3DBuildingsLayer = useCallback(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+    if (map.getLayer("3d-buildings")) {
+      map.removeLayer("3d-buildings");
+    }
+    // Mapbox's "composite" source stays; we don't touch it
+  }, []);
+
+  // Toggle 3D camera + extrusion layer
+  const handleToggle3D = useCallback(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+
+    setIs3D((prev) => {
+      const going3D = !prev;
+
+      if (going3D) {
+        // enter 3D: tilt & rotate camera, add extruded buildings
+        map.easeTo({
+          pitch: 60,
+          bearing: 45,
+          duration: 500,
+          essential: true,
+        });
+        add3DBuildingsLayer();
+      } else {
+        // exit 3D: reset camera, remove extruded buildings
+        map.easeTo({
+          pitch: 0,
+          bearing: 0,
+          duration: 500,
+          essential: true,
+        });
+        remove3DBuildingsLayer();
+      }
+
+      return going3D;
+    });
+  }, [add3DBuildingsLayer, remove3DBuildingsLayer]);
+
+  // If style reloads while in 3D, re-add extrusion layer
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+
+    const handleStyleLoad = () => {
+      if (is3D) {
+        add3DBuildingsLayer();
+      }
+    };
+
+    map.on("style.load", handleStyleLoad);
+    return () => {
+      map.off("style.load", handleStyleLoad);
+    };
+  }, [is3D, add3DBuildingsLayer]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
@@ -224,7 +378,7 @@ export default function MapPageClient({ user }: Props) {
         </div>
       </nav>
 
-      {/* Header stats bar */}
+      {/* Header stats */}
       <header className="absolute left-0 right-0 top-16 z-20 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -249,7 +403,9 @@ export default function MapPageClient({ user }: Props) {
                   <div className="text-2xl font-bold text-primary">
                     {saskatoonEvents.filter((e) => e.isTracking).length}
                   </div>
-                  <div className="text-xs text-muted-foreground">Tracking</div>
+                  <div className="text-xs text-muted-foreground">
+                    Tracking
+                  </div>
                 </div>
               </div>
             </div>
@@ -266,19 +422,15 @@ export default function MapPageClient({ user }: Props) {
             </div>
           ) : (
             <div className="relative h-full w-full">
-              {/* The map itself */}
               <MapboxMap
-                ref={(ref) => {
-                  // react-map-gl gives us the MapRef instance here
-                  // store it in state so our zoom buttons can use it
-                  if (ref) setMapRef(ref);
-                }}
+                ref={setMapRef}
                 mapboxAccessToken={MAPBOX_TOKEN}
                 initialViewState={INITIAL_VIEW}
+                // stick with default street style in BOTH modes
                 mapStyle="mapbox://styles/mapbox/streets-v12"
                 style={{ width: "100%", height: "100%" }}
               >
-                {/* all markers */}
+                {/* markers */}
                 {saskatoonEvents.map((event) => (
                   <Marker
                     key={event.id}
@@ -308,7 +460,7 @@ export default function MapPageClient({ user }: Props) {
                   </Marker>
                 ))}
 
-                {/* floating popup card (top-left of map) */}
+                {/* popup overlay (top-left of map) */}
                 {activeEvent && (
                   <div className="pointer-events-none absolute left-4 top-4 z-30 max-w-xl">
                     <div className="pointer-events-auto">
@@ -326,8 +478,12 @@ export default function MapPageClient({ user }: Props) {
                 )}
               </MapboxMap>
 
-              {/* custom zoom controls overlayed on the map */}
-              <MapControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+              {/* controls overlay */}
+              <MapControls
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onToggle3D={handleToggle3D}
+              />
             </div>
           )}
         </div>
