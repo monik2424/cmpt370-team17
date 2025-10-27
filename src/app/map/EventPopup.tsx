@@ -1,0 +1,141 @@
+"use client";
+
+import { Calendar, Clock, MapPin, Users, Heart, Share2, Send } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface EventPopupProps {
+  title: string;
+  description?: string;
+  date: string;
+  time: string;
+  location: string;
+  attendees: number;
+  onClose: () => void;
+}
+
+export default function EventPopup({
+  title,
+  description,
+  date,
+  time,
+  location,
+  attendees,
+  onClose,
+}: EventPopupProps) {
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.18 }}
+        // this is styled to look like your first screenshot
+        className="pointer-events-auto w-full max-w-xl rounded-xl border border-[#2a2a2a] bg-[#111111] p-5 text-white shadow-xl"
+      >
+        {/* top right close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-400 hover:text-gray-200 text-sm"
+        >
+          ✕
+        </button>
+
+        {/* badges */}
+        <div className="mb-2 flex flex-wrap gap-2 pr-8">
+          <span className="inline-flex items-center rounded-md border border-yellow-400/40 bg-yellow-400/10 px-2 py-0.5 text-[11px] font-medium text-yellow-400">
+            Birthday
+          </span>
+          <span className="inline-flex items-center rounded-md border border-yellow-400/40 bg-yellow-400/10 px-2 py-0.5 text-[11px] font-medium text-yellow-400">
+            Tracking
+          </span>
+        </div>
+
+        {/* title */}
+        <h2 className="text-xl font-semibold leading-tight">{title}</h2>
+
+        {/* description */}
+        {description && (
+          <p className="mt-2 text-sm text-gray-400 leading-relaxed">
+            {description}
+          </p>
+        )}
+
+        {/* details grid */}
+        <div className="mt-5 grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+          {/* Date */}
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#1a1a1a] ring-1 ring-[#2a2a2a]">
+              <Calendar className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div>
+              <div className="text-[11px] uppercase text-gray-400 tracking-wide">
+                Date
+              </div>
+              <div className="text-white text-sm font-medium">{date}</div>
+            </div>
+          </div>
+
+          {/* Time */}
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#1a1a1a] ring-1 ring-[#2a2a2a]">
+              <Clock className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div>
+              <div className="text-[11px] uppercase text-gray-400 tracking-wide">
+                Time
+              </div>
+              <div className="text-white text-sm font-medium">{time}</div>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#1a1a1a] ring-1 ring-[#2a2a2a]">
+              <MapPin className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div>
+              <div className="text-[11px] uppercase text-gray-400 tracking-wide">
+                Location
+              </div>
+              <div className="text-white text-sm font-medium">
+                {location}
+              </div>
+            </div>
+          </div>
+
+          {/* Attendees */}
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#1a1a1a] ring-1 ring-[#2a2a2a]">
+              <Users className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div>
+              <div className="text-[11px] uppercase text-gray-400 tracking-wide">
+                Attendees
+              </div>
+              <div className="text-white text-sm font-medium">
+                {attendees}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* footer actions */}
+        <div className="mt-6 flex flex-col gap-3 text-sm text-white sm:flex-row sm:items-stretch">
+          <button className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1a1a1a] px-3 py-2 font-medium ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]">
+            <Heart className="h-4 w-4 text-red-500" />
+            <span>Tracking</span>
+          </button>
+
+          <button className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1a1a1a] px-3 py-2 font-medium ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]">
+            <Send className="h-4 w-4" />
+            <span>Get Directions</span>
+          </button>
+
+          <button className="flex items-center justify-center rounded-md bg-[#1a1a1a] px-3 py-2 ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]">
+            <Share2 className="h-4 w-4" />
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
