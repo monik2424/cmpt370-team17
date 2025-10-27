@@ -1,5 +1,4 @@
-// app/map/page.tsx  (SERVER COMPONENT - no "use client")
-import { auth } from '@/lib/auth';
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import MapPageClient from "./MapPageClient";
 
@@ -10,9 +9,9 @@ export default async function MapPage() {
     redirect("/login");
   }
 
-  const user = session.user as any;
+  const user = {
+    name: session.user?.name ?? undefined,
+  };
 
-  return (
-    <MapPageClient user={user} />
-  );
+  return <MapPageClient user={user} />;
 }

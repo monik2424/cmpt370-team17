@@ -8,9 +8,10 @@ import {
   useRef,
 } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
-import MapboxMap, { Marker, MapRef } from "react-map-gl/mapbox";
+import MapboxMap, { Marker, MapRef, Source, Layer } from "react-map-gl/mapbox";
 import EventMarker from "./EventMarker";
 import EventPopup from "./EventPopup";
+import TrackingPopup from "./TrackingPopup";
 import { Box } from "lucide-react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "";
@@ -136,6 +137,25 @@ type Props = {
   };
 };
 
+// For Tracking Route Line
+
+// A single LineString feature with coordinates [lng, lat][]
+type RouteFeature = {
+  type: "Feature";
+  geometry: {
+    type: "LineString";
+    coordinates: [number, number][];
+  };
+  properties: Record<string, unknown>;
+};
+
+// A FeatureCollection wrapper for the route
+type RouteFeatureCollection = {
+  type: "FeatureCollection";
+  features: RouteFeature[];
+};
+
+// zoom / 3D toggle buttons
 function MapControls({
   onZoomIn,
   onZoomOut,
@@ -153,14 +173,12 @@ function MapControls({
       >
         +
       </button>
-
       <button
         onClick={onZoomOut}
         className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
       >
         −
       </button>
-
       <button
         onClick={onToggle3D}
         className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0f1115] text-white shadow-lg ring-1 ring-white/10 hover:bg-[#1a1d24] active:scale-[0.97]"
@@ -174,14 +192,25 @@ function MapControls({
 
 export default function MapPageClient({ user }: Props) {
   const [activeMarkerId, setActiveMarkerId] = useState<number | null>(null);
-  const [is3D, setIs3D] = useState(false);
 
-  // NEW: track user's location
   const [userLocation, setUserLocation] = useState<{
     lat: number;
     lng: number;
-  } | null>(null); // NEW
+  } | null>(null);
+  const [isTrackingRoute, setIsTrackingRoute] = useState(false);
+  const [travelInfo, setTravelInfo] = useState<{
+    driving?: { distance: number; duration: number };
+    walking?: { distance: number; duration: number };
+    cycling?: { distance: number; duration: number };
+  } | null>(null);
 
+  // route line driving route
+  const [routeGeoJSON, setRouteGeoJSON] = useState<RouteFeatureCollection | null>(null);
+
+  // 3D mode state
+  const [is3D, setIs3D] = useState(false);
+
+  // ref to map
   const mapRef = useRef<MapRef | null>(null);
   const setMapRef = useCallback((instance: MapRef | null) => {
     mapRef.current = instance;
@@ -191,9 +220,6 @@ export default function MapPageClient({ user }: Props) {
     () => saskatoonEvents.find((e) => e.id === activeMarkerId) ?? null,
     [activeMarkerId]
   );
-
-  const handleMarkerClick = (id: number) =>
-    setActiveMarkerId((prev) => (prev === id ? null : id));
 
   const handleZoomIn = useCallback(() => {
     mapRef.current?.zoomIn({ duration: 200 });
@@ -299,7 +325,7 @@ export default function MapPageClient({ user }: Props) {
     });
   }, [add3DBuildingsLayer, remove3DBuildingsLayer]);
 
-  // keep 3D buildings alive across style changes
+  // keep 3D layer if style reloads
   useEffect(() => {
     const mapInstance = mapRef.current?.getMap();
     if (!mapInstance) {
@@ -313,13 +339,12 @@ export default function MapPageClient({ user }: Props) {
     };
 
     mapInstance.on("style.load", handleStyleLoad);
-
     return () => {
       mapInstance.off("style.load", handleStyleLoad);
     };
   }, [is3D, add3DBuildingsLayer]);
 
-  // NEW: get user's location once and pan there
+  // geolocation (get user position once)
   useEffect(() => {
     if (!navigator.geolocation) {
       console.warn("Geolocation not supported by this browser.");
@@ -330,13 +355,11 @@ export default function MapPageClient({ user }: Props) {
       (pos) => {
         const { latitude, longitude } = pos.coords;
 
-        // save user's location
         setUserLocation({
           lat: latitude,
           lng: longitude,
         });
 
-        // optional UX: center map on them
         if (mapRef.current) {
           mapRef.current.flyTo({
             center: [longitude, latitude],
@@ -355,10 +378,131 @@ export default function MapPageClient({ user }: Props) {
         maximumAge: 10000,
       }
     );
-  }, []); // NEW
+  }, []);
 
-  const PAGE_SHELL_CLASSES =
-    "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
+  // fetch Mapbox Directions for driving/walking/biking
+  const fetchDirectionsAndTravelInfo = useCallback(
+    async (
+      origin: { lat: number; lng: number },
+      destination: { lat: number; lng: number }
+    ): Promise<{
+      metrics: {
+        [mode: string]: { distance: number; duration: number };
+      };
+      drivingRoute: RouteFeatureCollection | null;
+    }> => {
+      const profiles = [
+        { profile: "mapbox/driving", key: "driving" },
+        { profile: "mapbox/walking", key: "walking" },
+        { profile: "mapbox/cycling", key: "cycling" },
+      ];
+
+      const metricsResult: {
+        [mode: string]: { distance: number; duration: number };
+      } = {};
+
+      let drivingGeoJSON: RouteFeatureCollection | null = null;
+
+      await Promise.all(
+        profiles.map(async ({ profile, key }) => {
+          const coords = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
+          const url = `https://api.mapbox.com/directions/v5/${profile}/${coords}?access_token=${MAPBOX_TOKEN}&geometries=geojson&overview=full`;
+
+          const res = await fetch(url);
+          const data = await res.json();
+
+          if (data.routes && data.routes.length > 0) {
+            const route0 = data.routes[0];
+
+            metricsResult[key] = {
+              distance: route0.distance,
+              duration: route0.duration,
+            };
+
+            if (key === "driving" && route0.geometry) {
+              const lineCoords = route0.geometry.coordinates as [number, number][];
+
+              drivingGeoJSON = {
+                type: "FeatureCollection",
+                features: [
+                  {
+                    type: "Feature",
+                    geometry: {
+                      type: "LineString",
+                      coordinates: lineCoords,
+                    },
+                    properties: {},
+                  },
+                ],
+              };
+            }
+          }
+        })
+      );
+
+      return {
+        metrics: metricsResult,
+        drivingRoute: drivingGeoJSON,
+      };
+    },
+    []
+  );
+  const handleMarkerClick = (id: number) => {
+    setActiveMarkerId((prev) => (prev === id ? null : id));
+    setIsTrackingRoute(false);
+    setRouteGeoJSON(null);
+    setTravelInfo(null);
+  };
+
+  const handleStartTracking = useCallback(async () => {
+    if (!userLocation || !activeEvent) return;
+
+    const { metrics, drivingRoute } = await fetchDirectionsAndTravelInfo(
+      userLocation,
+      { lat: activeEvent.lat, lng: activeEvent.lng }
+    );
+
+    setTravelInfo(metrics);
+    setRouteGeoJSON(drivingRoute);
+    setIsTrackingRoute(true);
+
+    if (
+      mapRef.current &&
+      drivingRoute &&
+      drivingRoute.features.length > 0 &&
+      drivingRoute.features[0].geometry.coordinates.length > 0
+    ) {
+      const coords = drivingRoute.features[0].geometry.coordinates;
+
+      let minLng = coords[0][0];
+      let maxLng = coords[0][0];
+      let minLat = coords[0][1];
+      let maxLat = coords[0][1];
+
+      for (const [lng, lat] of coords) {
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      }
+
+      mapRef.current.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 80, duration: 800 }
+      );
+    }
+  }, [userLocation, activeEvent, fetchDirectionsAndTravelInfo]);
+
+  const handleStopTracking = useCallback(() => {
+    setIsTrackingRoute(false);
+    setRouteGeoJSON(null);
+    setTravelInfo(null);
+  }, []);
+
+  const PAGE_SHELL_CLASSES = "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
@@ -366,7 +510,6 @@ export default function MapPageClient({ user }: Props) {
       <nav className="bg-[#1f2937] text-white shadow dark:bg-gray-800">
         <div className={PAGE_SHELL_CLASSES}>
           <div className="flex h-16 items-center justify-between">
-            {/* left side */}
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-semibold text-white">
                 Saskatoon Events
@@ -379,12 +522,14 @@ export default function MapPageClient({ user }: Props) {
                 >
                   Dashboard
                 </a>
+
                 <a
                   href="/events"
                   className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
                 >
                   Events
                 </a>
+
                 <a
                   href="/map"
                   className="rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text-white"
@@ -393,8 +538,6 @@ export default function MapPageClient({ user }: Props) {
                 </a>
               </div>
             </div>
-
-            {/* right side */}
             <div className="flex items-center">
               <span className="text-sm text-gray-300">{user?.name}</span>
             </div>
@@ -402,7 +545,6 @@ export default function MapPageClient({ user }: Props) {
         </div>
       </nav>
 
-      {/* HEADER / STATS BAR */}
       <header className="border-b border-border bg-background/95 backdrop-blur-sm dark:bg-black">
         <div className={PAGE_SHELL_CLASSES + " py-4"}>
           <div className="flex items-center justify-between">
@@ -416,23 +558,21 @@ export default function MapPageClient({ user }: Props) {
             </div>
 
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary text-white dark:text-white">
-                    {saskatoonEvents.length}
-                  </div>
-                  <div className="text-xs text-muted-foreground text-gray-400">
-                    Events
-                  </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary text-white dark:text-white">
+                  {saskatoonEvents.length}
                 </div>
+                <div className="text-xs text-muted-foreground text-gray-400">
+                  Events
+                </div>
+              </div>
 
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary text-white dark:text-white">
-                    {saskatoonEvents.filter((e) => e.isTracking).length}
-                  </div>
-                  <div className="text-xs text-muted-foreground text-gray-400">
-                    Tracking
-                  </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary text-white dark:text-white">
+                  {saskatoonEvents.filter((e) => e.isTracking).length}
+                </div>
+                <div className="text-xs text-muted-foreground text-gray-400">
+                  Tracking
                 </div>
               </div>
             </div>
@@ -440,10 +580,10 @@ export default function MapPageClient({ user }: Props) {
         </div>
       </header>
 
-      {/* MAP AREA */}
+      {/* MAP SECTION */}
       <main className="flex flex-1 bg-gray-900/10 py-4 dark:bg-gray-900">
-        <div className={PAGE_SHELL_CLASSES + " flex w-full"}>
-          <div className="relative flex-1 rounded-md border border-border bg-black/5 shadow-sm dark:bg-black/20">
+        <div className={PAGE_SHELL_CLASSES + " relative flex w-full"}>
+          <div className="relative flex-1 overflow-hidden rounded-md border border-border bg-black/5 shadow-sm dark:bg-black/20">
             {!MAPBOX_TOKEN ? (
               <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-muted-foreground text-sm text-muted-foreground">
                 Missing Mapbox token
@@ -457,7 +597,26 @@ export default function MapPageClient({ user }: Props) {
                   mapStyle="mapbox://styles/mapbox/streets-v12"
                   style={{ width: "100%", height: "100%" }}
                 >
-                  {/* event markers */}
+                  {/* route line overlay */}
+                  {isTrackingRoute && routeGeoJSON && (
+                    <Source id="route" type="geojson" data={routeGeoJSON}>
+                      <Layer
+                        id="route-line"
+                        type="line"
+                        layout={{
+                          "line-join": "round",
+                          "line-cap": "round",
+                        }}
+                        paint={{
+                          "line-color": "#00bfff", 
+                          "line-width": 4,
+                          "line-opacity": 0.9,
+                        }}
+                      />
+                    </Source>
+                  )}
+
+                  {/* each event as a marker */}
                   {saskatoonEvents.map((event) => (
                     <Marker
                       key={event.id}
@@ -487,7 +646,7 @@ export default function MapPageClient({ user }: Props) {
                     </Marker>
                   ))}
 
-                  {/* NEW: user location marker */}
+                  {/* user's current position */}
                   {userLocation && (
                     <Marker
                       longitude={userLocation.lng}
@@ -495,15 +654,13 @@ export default function MapPageClient({ user }: Props) {
                       anchor="center"
                     >
                       <div className="relative">
-                        {/* pulsing aura */}
-                        <span className="absolute inline-block h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/30 blur-[2px] animate-ping" />
-                        {/* solid dot */}
+                        <span className="absolute inline-block h-6 w-6 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-blue-500/30 blur-[2px]" />
                         <span className="relative inline-block h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-gray-900" />
                       </div>
                     </Marker>
                   )}
 
-                  {/* popup overlay */}
+                  {/* top-left popup (event card) */}
                   {activeEvent && (
                     <div className="pointer-events-none absolute top-4 left-0 z-30">
                       <div
@@ -519,18 +676,38 @@ export default function MapPageClient({ user }: Props) {
                           time={activeEvent.time}
                           location={activeEvent.location}
                           attendees={activeEvent.attendees}
-                          onClose={() => setActiveMarkerId(null)}
+                          onClose={() => {
+                            setActiveMarkerId(null);
+                            setIsTrackingRoute(false);
+                            setRouteGeoJSON(null);
+                            setTravelInfo(null);
+                          }}
+                          onStartTracking={handleStartTracking}
                         />
                       </div>
                     </div>
                   )}
                 </MapboxMap>
 
+                {/* map UI controls */}
                 <MapControls
                   onZoomIn={handleZoomIn}
                   onZoomOut={handleZoomOut}
                   onToggle3D={handleToggle3D}
                 />
+              </div>
+            )}
+
+            {/* bottom tracking popup */}
+            {isTrackingRoute && travelInfo && activeEvent && (
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-40 flex justify-center pb-4">
+                <div className="pointer-events-auto w-full max-w-xl px-4">
+                  <TrackingPopup
+                    eventTitle={activeEvent.title}
+                    travelInfo={travelInfo}
+                    onStopTracking={handleStopTracking}
+                  />
+                </div>
               </div>
             )}
           </div>
