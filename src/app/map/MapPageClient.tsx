@@ -176,6 +176,12 @@ export default function MapPageClient({ user }: Props) {
   const [activeMarkerId, setActiveMarkerId] = useState<number | null>(null);
   const [is3D, setIs3D] = useState(false);
 
+  // NEW: track user's location
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null); // NEW
+
   const mapRef = useRef<MapRef | null>(null);
   const setMapRef = useCallback((instance: MapRef | null) => {
     mapRef.current = instance;
@@ -293,27 +299,64 @@ export default function MapPageClient({ user }: Props) {
     });
   }, [add3DBuildingsLayer, remove3DBuildingsLayer]);
 
+  // keep 3D buildings alive across style changes
   useEffect(() => {
-  // grab the map instance once
-  const mapInstance = mapRef.current?.getMap();
-  if (!mapInstance) {
-    return;
-  }
-
-  const handleStyleLoad = () => {
-    if (is3D) {
-      add3DBuildingsLayer();
+    const mapInstance = mapRef.current?.getMap();
+    if (!mapInstance) {
+      return;
     }
-  };
 
-  mapInstance.on("style.load", handleStyleLoad);
+    const handleStyleLoad = () => {
+      if (is3D) {
+        add3DBuildingsLayer();
+      }
+    };
 
-  return () => {
-    mapInstance.off("style.load", handleStyleLoad);
-  };
-}, [is3D, add3DBuildingsLayer]);
+    mapInstance.on("style.load", handleStyleLoad);
 
-  // shared shell so nav/header/map align
+    return () => {
+      mapInstance.off("style.load", handleStyleLoad);
+    };
+  }, [is3D, add3DBuildingsLayer]);
+
+  // NEW: get user's location once and pan there
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.warn("Geolocation not supported by this browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+
+        // save user's location
+        setUserLocation({
+          lat: latitude,
+          lng: longitude,
+        });
+
+        // optional UX: center map on them
+        if (mapRef.current) {
+          mapRef.current.flyTo({
+            center: [longitude, latitude],
+            zoom: 14,
+            duration: 800,
+            essential: true,
+          });
+        }
+      },
+      (err) => {
+        console.warn("User denied / position unavailable:", err);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 10000,
+      }
+    );
+  }, []); // NEW
+
   const PAGE_SHELL_CLASSES =
     "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
@@ -359,7 +402,7 @@ export default function MapPageClient({ user }: Props) {
         </div>
       </nav>
 
-      {/* HEADER / STATS BAR with restored styling */}
+      {/* HEADER / STATS BAR */}
       <header className="border-b border-border bg-background/95 backdrop-blur-sm dark:bg-black">
         <div className={PAGE_SHELL_CLASSES + " py-4"}>
           <div className="flex items-center justify-between">
@@ -414,7 +457,7 @@ export default function MapPageClient({ user }: Props) {
                   mapStyle="mapbox://styles/mapbox/streets-v12"
                   style={{ width: "100%", height: "100%" }}
                 >
-                  {/* markers */}
+                  {/* event markers */}
                   {saskatoonEvents.map((event) => (
                     <Marker
                       key={event.id}
@@ -444,7 +487,23 @@ export default function MapPageClient({ user }: Props) {
                     </Marker>
                   ))}
 
-                  {/* popup overlay back to top-left gutter */}
+                  {/* NEW: user location marker */}
+                  {userLocation && (
+                    <Marker
+                      longitude={userLocation.lng}
+                      latitude={userLocation.lat}
+                      anchor="center"
+                    >
+                      <div className="relative">
+                        {/* pulsing aura */}
+                        <span className="absolute inline-block h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/30 blur-[2px] animate-ping" />
+                        {/* solid dot */}
+                        <span className="relative inline-block h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-gray-900" />
+                      </div>
+                    </Marker>
+                  )}
+
+                  {/* popup overlay */}
                   {activeEvent && (
                     <div className="pointer-events-none absolute top-4 left-0 z-30">
                       <div
