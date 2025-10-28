@@ -7,6 +7,8 @@ import {
   Users,
   Clock,
   ArrowLeft,
+  Search,
+  Filter,
 } from "lucide-react";
 
 // Stub event data - TODO: replace with connection to william's event data
@@ -107,7 +109,7 @@ const categoryNames: { [key: string]: string } = {
 
 export default function EventsListingPage() {
   const [category, setCategory] = useState<string>("sports");
-  const [searchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredEvents, setFilteredEvents] = useState(stubEvents);
 
   // Use the URLSearchParams from node to Get the category from the URL parameters [ie. ?category=sports]
@@ -231,7 +233,28 @@ export default function EventsListingPage() {
             </p>
           </motion.div>
 
-    
+          {/* Search and Filter Bar - Currently filter is a dead button  */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-col md:flex-row gap-4 mb-8"
+          >
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 text-white font-mono text-sm px-10 py-3 focus:outline-none focus:border-white/30 transition"
+              />
+            </div>
+            <button className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 text-white font-mono text-sm hover:bg-white/10 transition cursor-pointer">
+              <Filter className="w-4 h-4" />
+              Filters
+            </button>
+          </motion.div>
 
           {/* Results Count */}
           <motion.p
