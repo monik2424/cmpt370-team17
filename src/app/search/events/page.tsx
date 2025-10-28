@@ -53,6 +53,34 @@ const stubEvents = [
     description: "Connect with local tech professionals and entrepreneurs",
     host: "Saskatoon Tech Hub"
   },
+  {
+    id: 4,
+    title: "Vivaldi: Four Seasons Concerto",
+    category: "music",
+    date: "2025-12-12",
+    time: "6:00 PM",
+    venue: "TCU Place",
+    location: "dsfsdfhksdjfklsj",
+    attendees: 78,
+    maxAttendees: 150,
+    image: "/placeholder-music.jpg",
+    description: "Enjoy Saskatoon philharmonic's rendition of the Baroque classic",
+    host: "Saskatoon philharmonic"
+  },
+  {
+    id: 5,
+    title: "Rouguelike Game Jam",
+    category: "tech",
+    date: "2026-01-15",
+    time: "6:00 PM",
+    venue: "Thorvaldson Usask",
+    location: "dsfsdfhksdjfklsj",
+    attendees: 37,
+    maxAttendees: 100,
+    image: "/placeholder-tech.jpg",
+    description: "Work together to build creative and inspired Rouguelike games",
+    host: "Usask game dev"
+  },
 ];
 
 
@@ -68,7 +96,10 @@ const categoryNames: { [key: string]: string } = {
   food: "Food & Dining",
   arts: "Arts & Culture",
   seasonal: "Seasonal",
-  community: "Community"
+  community: "Community",
+  tech: "Tech",
+  education: "Education",
+  other: "Other"
 };
 
 

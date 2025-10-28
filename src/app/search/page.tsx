@@ -10,7 +10,10 @@ import {
   Palette,
   Sparkles,
   PartyPopper,
-  Church
+  Church,
+  Joystick,
+  BookIcon,
+  Box
 } from "lucide-react"; // Used React icons
 
 
@@ -72,6 +75,27 @@ const categories = [
     description: "Local gatherings and community events",
     icon: Church,
     color: "from-teal-500/20 to-green-600/20",
+  },
+  {
+    id: "tech",
+    title: "Tech",
+    description: "Technology focused meetups and events",
+    icon: Joystick,
+    color: "from-gray-500/20 to-purple-600/20",
+  },
+  {
+    id: "education",
+    title: "Education",
+    description: "Academic and learning oppurtunities",
+    icon: BookIcon,
+    color: "from-red-500/20 to-pink-600/20",
+  },
+  {
+    id: "other",
+    title: "Other",
+    description: "Unique events that form their own category",
+    icon: Box,
+    color: "from-blue-500/20 to-blue-600/20",
   },
 ];
 
