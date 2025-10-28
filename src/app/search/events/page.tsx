@@ -108,7 +108,7 @@ const categoryNames: { [key: string]: string } = {
 
 
 export default function EventsListingPage() {
-  const [category, setCategory] = useState<string>("sports");
+  const [category, setCategory] = useState<string>("sports"); // Initialize useState setters ~ Referenced https://react.dev/reference/react/useState
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredEvents, setFilteredEvents] = useState(stubEvents);
 
@@ -246,7 +246,7 @@ export default function EventsListingPage() {
                 type="text"
                 placeholder="Search events..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)} // update search query on a letter by letter basis * uses React useState
                 className="w-full bg-white/5 border border-white/10 text-white font-mono text-sm px-10 py-3 focus:outline-none focus:border-white/30 transition"
               />
             </div>
@@ -304,7 +304,7 @@ export default function EventsListingPage() {
 
 
                   {/* Event Content */}
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col">
                     <h3 className="text-lg font-mono text-white mb-3 group-hover:text-white/90 transition">
                       {event.title}
                     </h3>
@@ -350,6 +350,15 @@ export default function EventsListingPage() {
                     </div>
 
 
+                    {/* Attend Event Button */}
+                    <div className="flex justify-end">
+                        <button
+                          onClick={() => handleNavigation("/login")} // PLACEHOLDER ~ Will replace with event connection
+                          className="px-4 py-2 bg-blue-600 border border-black-600 text-sm font-mono text-white hover:bg-blue-300 hover:text-black transition cursor-pointer rounded-lg"
+                        >
+                          Attend
+                        </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}

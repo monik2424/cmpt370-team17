@@ -173,7 +173,7 @@ export default function CategoriesPage() {
               </span>
             </div>
             <h1 className="text-5xl font-mono text-white mb-6">
-              Find Events by Category
+              Find Events by <span style={{ color: "cyan", fontWeight: "bold"}}> Category</span>
             </h1>
             <p className="text-sm font-mono text-gray-400 max-w-2xl mx-auto">
               Find the event you've been looking for! From sports tournaments to conventions, 
