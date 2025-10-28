@@ -175,7 +175,7 @@ export default function CategoriesPage() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
-                  onClick={() => handleNavigation(`/events?category=${category.id}`)}
+                  onClick={() => handleNavigation(`/search/events?category=${category.id}`)}
                   className="relative border border-gray-700 bg-gray-800 p-6 rounded-xl shadow-lg hover:bg-gray-750 hover:border-gray-600 transition-all duration-300 cursor-pointer group"
                 >
                   {/* Gradient overlay */}
