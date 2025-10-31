@@ -1,3 +1,10 @@
+/**
+ * EventsPage
+ * ----------------------------------------------------------------------------
+ * Renders the Events screen inside the app. Host users can create and manage
+ * their own events. Guests/Providers can view the page but cannot manage events.
+ */
+
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import db from '@/modules/db';
@@ -5,20 +12,22 @@ import DeleteEventButton from "@/components/EventComponents/DeleteEventButton";
 
 
 export default async function EventsPage() {
+  // Retrieve the currently signed-in user session
   const session = await auth();
+  // If the user is not authenticated, redirect them to login
   if (!session?.user) redirect('/login');
 
   const user = session.user as any;
   const isHost = user.role === 'HOST';
 
-  // If HOST, load their events
+  // If the user is a HOST, query Prisma for only events they created.
   const myEvents = isHost
     ? await db.event.findMany({
-        where: { createdById: user.id }, // relies on session.user.id
-        orderBy: { startAt: 'asc' },
-        include: { categoryTags: true },
+        where: { createdById: user.id },    // ownership scoping
+        orderBy: { startAt: 'asc' },        // sort upcoming first
+        include: { categoryTags: true },    // display tags in UI
       })
-    : [];
+    : []; // Non-hosts get an empty list for now
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
