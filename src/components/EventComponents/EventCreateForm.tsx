@@ -1,3 +1,19 @@
+/**
+ * EventCreateForm
+ * ----------------------------------------------------------------------------
+ *   Provides interactive UI for Hosts to create events.
+ *
+ *   1. User fills out inputs
+ *   2. Client validates required fields
+ *   3. Sends post request to /api/events
+ *   4. On success route to /events to display the updated list
+ *
+ * Tags
+ *   - User enters a comma-separated list
+ *   - Trim whitespace, remove empties
+ *   - Limit to max 12 tags (same as server)
+ */
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -5,32 +21,39 @@ import { useState } from "react";
 
 export default function EventCreateForm() {
   const router = useRouter();
+  // Individual form fields held in local component state
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [date, setDate] = useState(""); // yyyy-mm-dd
   const [time, setTime] = useState(""); // HH:MM
   const [isPrivate, setIsPrivate] = useState(true);
   const [tags, setTags] = useState(""); // comma separated
+
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
+  // User clicking the Create button
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Reset old status messages
     setErr(null);
     setOk(null);
 
+    // Basic client side validation for UX
     if (!name.trim()) return setErr("Please enter a name.");
     if (!date || !time) return setErr("Please pick a date and time.");
 
+    // Transform comma separated tags into an array
     const tagList = tags
       .split(",")
       .map((t) => t.trim())
-      .filter(Boolean)
-      .slice(0, 12);
+      .filter(Boolean)      // Prevent empty strings
+      .slice(0, 12);        // Max 12 tags
 
     setLoading(true);
     try {
+      // Send the creation payload to API route
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,12 +68,14 @@ export default function EventCreateForm() {
       });
       const data = await res.json();
       if (!res.ok) {
+        // If the server rejected input show reason to user
         setErr(data?.error || "Failed to create event.");
       } else {
+        // Show success message
         setOk("Event created!");
-        // go back to Events list
+        // Go back to Events list
         router.push("/events");
-        router.refresh();
+        router.refresh();       // Refresh to show the new event
       }
     } catch {
       setErr("Network error.");
@@ -65,7 +90,7 @@ export default function EventCreateForm() {
         <label className="block text-sm font-medium mb-1">Event name</label>
         <input
           className="w-full rounded border px-3 py-2 dark:bg-gray-900"
-          placeholder="MatikaneBirthday"
+          placeholder="Edit Event name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={loading}
@@ -76,7 +101,7 @@ export default function EventCreateForm() {
         <label className="block text-sm font-medium mb-1">Description</label>
         <textarea
           className="w-full rounded border px-3 py-2 dark:bg-gray-900"
-          placeholder="Short description…"
+          placeholder="Add Description"
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           rows={3}
