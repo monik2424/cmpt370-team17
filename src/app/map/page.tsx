@@ -1,3 +1,5 @@
+// Mark Betita
+// mcb540
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import MapPageClient from "./MapPageClient";

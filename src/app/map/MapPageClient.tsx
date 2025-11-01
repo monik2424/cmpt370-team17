@@ -1,3 +1,5 @@
+// Mark Betita
+// mcb540
 "use client";
 
 import {
@@ -228,7 +230,7 @@ export default function MapPageClient({ user }: Props) {
   const handleZoomOut = useCallback(() => {
     mapRef.current?.zoomOut({ duration: 200 });
   }, []);
-
+// Mapbox 3D buildings layer
   type MaybeSymbolLayer = {
     id: string;
     type?: string;
@@ -343,7 +345,9 @@ export default function MapPageClient({ user }: Props) {
       mapInstance.off("style.load", handleStyleLoad);
     };
   }, [is3D, add3DBuildingsLayer]);
-
+  // Persona 3 User Story 2: I can view the event 
+  // I’m participating in on the map so that I can track the distance and time it’ll take me to go from my location to the event.
+  
   // geolocation (get user position once)
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -615,7 +619,8 @@ export default function MapPageClient({ user }: Props) {
                       />
                     </Source>
                   )}
-
+                  {/* Persona 3 User Story 1:  I want to be able to see different icons on the interactive map so that 
+                  I can quickly distinguish what the events are without even having to click on them.*/}
                   {/* each event as a marker */}
                   {saskatoonEvents.map((event) => (
                     <Marker
