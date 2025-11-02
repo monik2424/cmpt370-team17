@@ -4,12 +4,20 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, password } = await req.json();
+    const { email, token, password } = await req.json();
 
     // Validation
-    if (!token || !password) {
+    if (!email || !token || !password) {
       return NextResponse.json(
-        { error: 'Token and password are required' },
+        { error: 'Email, OTP, and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate OTP format (6 digits)
+    if (token.length !== 6 || !/^\d+$/.test(token)) {
+      return NextResponse.json(
+        { error: 'Invalid OTP format. OTP must be 6 digits.' },
         { status: 400 }
       );
     }
@@ -21,14 +29,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find the reset token
-    const resetToken = await db.passwordResetToken.findUnique({
-      where: { token },
+    // Find the reset token matching both OTP and email
+    const resetToken = await db.passwordResetToken.findFirst({
+      where: { 
+        token,
+        email 
+      },
     });
 
     if (!resetToken) {
       return NextResponse.json(
-        { error: 'Invalid or expired reset token' },
+        { error: 'Invalid OTP or email. Please check and try again.' },
         { status: 404 }
       );
     }
@@ -37,11 +48,11 @@ export async function POST(req: NextRequest) {
     if (resetToken.expires < new Date()) {
       // Delete expired token
       await db.passwordResetToken.delete({
-        where: { token },
+        where: { id: resetToken.id },
       });
 
       return NextResponse.json(
-        { error: 'Reset token has expired. Please request a new one.' },
+        { error: 'OTP has expired. Please request a new one.' },
         { status: 410 }
       );
     }
@@ -70,12 +81,12 @@ export async function POST(req: NextRequest) {
     });
 
     // Delete the used token (one-time use only!)
-    // This prevents someone from reusing the same reset link
+    // This prevents someone from reusing the same OTP
     await db.passwordResetToken.delete({
-      where: { token },
+      where: { id: resetToken.id },
     });
 
-    console.log(`✅ Password successfully reset for user: ${user.email}`);
+    console.log(`✅ Password successfully reset for user: ${user.email} using OTP`);
 
     return NextResponse.json(
       { message: 'Password has been successfully reset' },
@@ -89,4 +100,6 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
 
