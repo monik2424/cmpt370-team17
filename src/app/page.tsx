@@ -284,17 +284,16 @@ export default function Home() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.9 }}
-                className="border border-white/10 bg-black/40 p-6 hover:bg-white/5 hover:border-white/20 transition-all duration-300 text-left group hover:shadow-lg hover:shadow-white/5"
+                onClick={() => router.push("/search")}
+                className="border border-white/10 bg-black/40 p-6 hover:bg-white/5 hover:border-white/20 transition-all duration-300 text-left group hover:shadow-lg hover:shadow-white/5 cursor-pointer"
               >
-                <motion.div
+                <div
                   className="w-12 h-12 bg-white/5 border border-white/10 flex items-center justify-center mb-4 group-hover:bg-white/10 transition-colors duration-300"
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                   <Megaphone className="w-6 h-6 text-white" />
-                </motion.div>
+                </div>
                 <h3 className="text-lg font-mono text-white mb-3">
-                  Venue Discovery
+                  Category Discovery
                 </h3>
                 <p className="text-xs font-mono text-white/60 leading-relaxed">
                   Find restaurants, venues, and event spaces in Saskatoon with availability filtering.
