@@ -27,8 +27,11 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(data.message);
-        setEmail(''); // Clear the form
+        setMessage(data.message + ' Please check your email and enter the OTP on the next page.');
+        // Redirect to reset password page after 2 seconds
+        setTimeout(() => {
+          window.location.href = '/reset-password';
+        }, 2000);
       } else {
         setError(data.error || 'Something went wrong');
       }
@@ -47,7 +50,7 @@ export default function ForgotPasswordPage() {
             Reset your password
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Enter your email address and we'll send you a password reset link
+            Enter your email address and we'll send you a 6-digit OTP code
           </p>
         </div>
         
