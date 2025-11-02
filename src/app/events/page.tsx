@@ -27,6 +27,9 @@ export default async function EventsPage() {
                 <a href="/events" className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-md text-sm font-medium">
                   Events
                 </a>
+                <a href="/map" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Map
+                </a>
               </div>
             </div>
             <div className="flex items-center">
