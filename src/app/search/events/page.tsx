@@ -1,3 +1,7 @@
+/* EventListing page 
+   Main Author: Nicholas Kennedy
+   Lines 158-203 was kept similar in formatting to landing page by Kartik  */
+
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -151,7 +155,7 @@ export default function EventsListingPage() {
   };
 
 
-
+  {/**************************** Adapted from Landing Page ************************************/}
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Navigation toolbar - adapted from existing landing page*/}
@@ -196,12 +200,13 @@ export default function EventsListingPage() {
           </button>
         </div>
       </nav>
-
-
+      {/**************************** END of Adapted content from Landing Page ************************************/}
+      
 
       {/* Header Section */}
       <section className="relative px-8 py-12">
         <div className="max-w-7xl mx-auto">
+
           {/* Back Button */}
           <motion.button
             initial={{ opacity: 0, x: -20 }}
@@ -214,6 +219,7 @@ export default function EventsListingPage() {
             Back to Categories
           </motion.button>
 
+          {/* Headers and sub-heading */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

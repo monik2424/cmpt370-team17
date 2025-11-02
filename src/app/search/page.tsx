@@ -1,3 +1,7 @@
+/* EventListing page 
+   Main Author: Nicholas Kennedy
+   Lines 119-161 was kept similar in formatting to landing page by Kartik  */
+
 "use client";
 
 import React from "react";
