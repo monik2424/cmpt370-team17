@@ -1,3 +1,18 @@
+/**
+ * Reset Password Page - OTP Verification and Password Reset
+ * Author: Monik
+ * 
+ * Description:
+ * - New OTP-based password reset page (replaces token-based system)
+ * - User enters email, 6-digit OTP, and new password
+ * - Validates OTP format (must be exactly 6 digits)
+ * - Validates password strength (minimum 8 characters)
+ * - Confirms password match before submission
+ * - Provides styled OTP input field with large, centered display
+ * - Shows success screen and auto-redirects to login after successful reset
+ * - Includes helpful links to resend OTP or return to login
+ */
+
 "use client";
 
 import { useState } from 'react';
