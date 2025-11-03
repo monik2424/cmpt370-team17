@@ -1,3 +1,15 @@
+/**
+ * Forgot Password Page - Request OTP
+ * Author: Monik
+ * 
+ * Description:
+ * - User enters their email address to request password reset
+ * - Sends request to API to generate and send 6-digit OTP via email
+ * - Updated messaging to inform users about OTP-based reset
+ * - Automatically redirects to reset password page after successful OTP send
+ * - Provides clear feedback messages for success/error states
+ */
+
 "use client";
 
 import { useState } from 'react';

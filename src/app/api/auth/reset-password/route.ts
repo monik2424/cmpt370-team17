@@ -1,3 +1,16 @@
+/**
+ * Password Reset - Verify OTP and Reset Password API Route
+ * Author: Monik
+ * 
+ * Description:
+ * - Verifies the 6-digit OTP sent to user's email
+ * - Validates OTP format and expiration (10-minute window)
+ * - Verifies OTP matches the email address provided
+ * - Hashes new password using bcrypt before storing
+ * - Deletes OTP after successful use (one-time use only)
+ * - Updated to work with OTP-based authentication instead of tokens
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/modules/db';
 import bcrypt from 'bcryptjs';

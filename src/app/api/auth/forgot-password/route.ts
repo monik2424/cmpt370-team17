@@ -1,3 +1,15 @@
+/**
+ * Password Reset - Forgot Password API Route
+ * Author: Monik
+ * 
+ * Description:
+ * - Generates a secure 6-digit OTP for password reset
+ * - Sends OTP via email using Resend email service
+ * - OTP expires in 10 minutes for security
+ * - Prevents email enumeration attacks by returning same response for valid/invalid emails
+ * - Replaces old token-based system with modern OTP approach
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/modules/db';
 import { Resend } from 'resend';
