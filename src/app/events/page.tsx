@@ -1,8 +1,9 @@
 /**
  * EventsPage
  * ----------------------------------------------------------------------------
- * Renders the Events screen inside the app. Host users can create and manage
- * their own events. Guests/Providers can view the page but cannot manage events.
+ * - Shows "Your Events" (the ones you created)
+ * - Also shows "Public Events" by other users (with Join/Leave)
+ * - Displays location, tags, description, attendees
  */
 
 import { redirect } from 'next/navigation';
@@ -10,24 +11,38 @@ import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 import DeleteEventButton from "@/components/EventComponents/DeleteEventButton";
 
+// NEW: add Join/Leave UI
+import JoinButton from "@/components/EventComponents/JoinButton";
+import LeaveButton from "@/components/EventComponents/LeaveButton";
 
 export default async function EventsPage() {
-  // Retrieve the currently signed-in user session
   const session = await auth();
-  // If the user is not authenticated, redirect them to login
   if (!session?.user) redirect('/login');
 
   const user = session.user as any;
-  const isHost = user.role === 'HOST';
 
-  // If the user is a HOST, query Prisma for only events they created.
-  const myEvents = isHost
+  // Anyone except PROVIDER can create/manage their own events
+  const canManage = user.role !== 'PROVIDER';
+
+  const myEvents = canManage
     ? await db.event.findMany({
-        where: { createdById: user.id },    // ownership scoping
-        orderBy: { startAt: 'asc' },        // sort upcoming first
-        include: { categoryTags: true },    // display tags in UI
+        where: { createdById: user.id },
+        orderBy: { startAt: 'asc' },
+        include: { categoryTags: true, attendees: true }, // include attendees if you show guestlist
       })
-    : []; // Non-hosts get an empty list for now
+    : [];
+
+
+  // 2) Public events created by OTHER users (so you can join/leave)
+  //    If your class now has only Hosts, this will show everyone else's public events.
+  const publicEventsByOthers = await db.event.findMany({
+    where: {
+      private: false,
+      createdById: { not: user.id },
+    },
+    orderBy: { startAt: 'asc' },
+    include: { categoryTags: true, attendees: true, createdBy: true },
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -62,65 +77,192 @@ export default async function EventsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="mb-6 flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {isHost ? 'Your Events' : 'All Events'}
-            </h2>
-            {isHost && (
-              <a
-                href="/events/create"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Create Event
-              </a>
-            )}
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
-            <div className="px-4 py-5 sm:p-6">
-              {isHost && myEvents.length > 0 ? (
-                <ul className="divide-y">
-                  {myEvents.map((e) => (
-                    <li key={e.id} className="py-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">{e.name}</div>
-                          <div className="text-sm text-gray-500">
-                            {new Date(e.startAt).toLocaleString()} • {e.private ? "PRIVATE" : "PUBLIC"}
-                          </div>
-                          {/* show description if present */}
-                          {e.description && (
-                            <p className="mt-1 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                              {e.description}
-                            </p>
-                          )}
-                          {e.categoryTags.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {e.categoryTags.map((t) => (
-                                <span
-                                  key={t.id}
-                                  className="text-xs rounded bg-gray-100 px-2 py-1 dark:bg-gray-700"
-                                >
-                                  {t.nameTag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <DeleteEventButton id={e.id} />
-                      </div>
-                    </li>))}
-                </ul>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  {isHost
-                    ? 'No events yet. Create your first event!'
-                    : 'Check back later for upcoming events.'}
-                </p>
+        <div className="px-4 py-6 sm:px-0 space-y-10">
+          {/* ------------------------- Your Events ------------------------- */}
+          <section>
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {canManage ? 'Your Events' : 'All Events'}
+              </h2>
+              {canManage && (
+                <a
+                  href="/events/create"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Create Event
+                </a>
               )}
             </div>
-          </div>
+
+            <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:p-6">
+                {canManage && myEvents.length > 0 ? (
+                  <ul className="divide-y">
+                    {myEvents.map((e) => (
+                      <li key={e.id} className="py-4">
+                        <div className="flex items-start justify-between gap-4">
+                          {/* Left: event details */}
+                          <div className="min-w-0">
+                            <div className="font-medium">{e.name}</div>
+                            <div className="text-sm text-gray-500">
+                              {new Date(e.startAt).toLocaleString()} • {e.private ? "PRIVATE" : "PUBLIC"}
+                            </div>
+
+                            {/* Location (Saskatoon) */}
+                            {e.location && (
+                              <div className="text-sm text-gray-600 dark:text-gray-300">
+                                📍 {e.location}
+                              </div>
+                            )}
+
+                            {/* Description */}
+                            {e.description && (
+                              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                {e.description}
+                              </p>
+                            )}
+
+                            {/* Tags */}
+                            {e.categoryTags.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {e.categoryTags.map((t) => (
+                                  <span
+                                    key={t.id}
+                                    className="text-xs rounded bg-gray-100 px-2 py-1 dark:bg-gray-700"
+                                  >
+                                    {t.nameTag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Attendees list/summary */}
+                            <div className="mt-3 text-xs text-gray-600 dark:text-gray-300">
+                              Attendees: {e.attendees.length}
+                              {e.attendees.length > 0 && (
+                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                  {e.attendees.map(a => (
+                                    <span key={a.id}>{a.email}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right: actions (owner) */}
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            {/* Edit (owner only) */}
+                            <a
+                              href={`/events/${e.id}/edit`}
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              Edit
+                            </a>
+
+                            {/* Delete (owner only) */}
+                            <DeleteEventButton id={e.id} />
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                    {canManage
+                      ? 'No events yet. Create your first event!'
+                      : 'Check back later for upcoming events.'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* -------------------- Public Events by Others ------------------- */}
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              Public Events (Others)
+            </h2>
+
+            <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:p-6">
+                {publicEventsByOthers.length > 0 ? (
+                  <ul className="divide-y">
+                    {publicEventsByOthers.map((e) => {
+                      const IAmAttending = e.attendees.some(a => a.id === user.id);
+                      return (
+                        <li key={e.id} className="py-4">
+                          <div className="flex items-start justify-between gap-4">
+                            {/* Left: event details */}
+                            <div className="min-w-0">
+                              <div className="font-medium">
+                                {e.name}
+                                <span className="ml-2 text-xs text-gray-500">
+                                  • by {e.createdBy?.name || e.createdBy?.email}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {new Date(e.startAt).toLocaleString()} • PUBLIC
+                              </div>
+
+                              {e.location && (
+                                <div className="text-sm text-gray-600 dark:text-gray-300">
+                                  📍 {e.location}
+                                </div>
+                              )}
+
+                              {e.description && (
+                                <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                  {e.description}
+                                </p>
+                              )}
+
+                              {e.categoryTags.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {e.categoryTags.map((t) => (
+                                    <span
+                                      key={t.id}
+                                      className="text-xs rounded bg-gray-100 px-2 py-1 dark:bg-gray-700"
+                                    >
+                                      {t.nameTag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              <div className="mt-3 text-xs text-gray-600 dark:text-gray-300">
+                                Attendees: {e.attendees.length}
+                                {e.attendees.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                    {e.attendees.map(a => (
+                                      <span key={a.id}>{a.email}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right: Join/Leave */}
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              {!IAmAttending && (
+                                <JoinButton id={e.id} />
+                              )}
+                              {IAmAttending && (
+                                <LeaveButton id={e.id} />
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                    No public events yet.
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>

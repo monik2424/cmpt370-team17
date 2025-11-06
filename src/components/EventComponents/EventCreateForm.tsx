@@ -77,7 +77,7 @@ export default function EventCreateForm() {
         setOk("Event created!");
         // Go back to Events list
         router.push("/events");
-        router.refresh();       // Refresh to show the new event
+        //router.refresh();       // Refresh to show the new event
       }
     } catch {
       setErr("Network error.");

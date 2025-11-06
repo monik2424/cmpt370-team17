@@ -23,7 +23,10 @@ export default async function CreateEventPage() {
 
   // Role-based access: only HOST users can create events
   if (!user) redirect("/login");
-  if (user.role !== "HOST") redirect("/events");
+  // Providers cannot create events, but leave commented out for now until I find a better way to deal with it
+  // if (user.role === "PROVIDER") redirect("/events");
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

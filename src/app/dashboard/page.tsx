@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth, signOut } from '@/lib/auth';
+import db from "@/modules/db";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -9,6 +10,21 @@ export default async function DashboardPage() {
   }
 
   const user = session.user as any;
+
+  const createdEvents = await db.event.findMany({
+    where: { createdById: user.id },
+    orderBy: { startAt: 'asc' }
+  });
+
+  // ✅ Fetch events the user is ATTENDING
+  const attendingEvents = await db.event.findMany({
+    where: {
+      attendees: {
+        some: { id: user.id }
+      }
+    },
+    orderBy: { startAt: 'asc' }
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -69,7 +85,7 @@ export default async function DashboardPage() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Quick Actions</h3>
                   <div className="mt-2 space-y-2">
-                    {user.role === 'HOST' && (
+                    {user.role !== 'PROVIDER' && (
                       <a href="/events/create" className="block w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium text-center">
                         Create New Event
                       </a>
@@ -87,14 +103,50 @@ export default async function DashboardPage() {
               </div>
 
               {/* Role-specific content */}
-              {user.role === 'HOST' && (
+              {user.role !== 'PROVIDER' && (
                 <div className="mt-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                     Your Events
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    You haven't created any events yet. Click "Create New Event" to get started!
-                  </p>
+                  {createdEvents.length === 0 && attendingEvents.length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      You aren't part of any events yet.
+                    </p>
+                  )}
+                  {createdEvents.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-medium text-gray-900 dark:text-white">Events You Created</h4>
+                      <ul className="mt-2 space-y-1">
+                        {createdEvents.map(ev => (
+                          <li key={ev.id}>
+                            <a
+                              href={`/events`}
+                              className="text-blue-500 hover:underline"
+                            >
+                              {ev.name} — {new Date(ev.startAt).toLocaleString()}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {attendingEvents.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="font-medium text-gray-900 dark:text-white">Events You're Attending</h4>
+                      <ul className="mt-2 space-y-1">
+                        {attendingEvents.map(ev => (
+                          <li key={ev.id}>
+                            <a
+                              href={`/events`}
+                              className="text-blue-500 hover:underline"
+                            >
+                              {ev.name} — {new Date(ev.startAt).toLocaleString()}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -27,6 +27,7 @@ import db from "@/modules/db";
 const CreateEventSchema = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(1000).optional().nullable(),
+  location: z.string().min(5).max(200),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // yyyy-mm-dd
   time: z.string().regex(/^\d{2}:\d{2}$/),       // hh:mm
   isPrivate: z.boolean().default(true),
@@ -38,10 +39,14 @@ export async function POST(req: Request) {
     // Authenticate session and user
     const session = await auth();
     const user = session?.user as any;
-    // If not signed in OR not a Host
-    if (!user?.id || user.role !== "HOST") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    if (!user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    // Providers cannot create events, leave commented out for now until I find a better way to deal with it
+    //if (user.role === "PROVIDER") {
+    //  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    //}
 
     // Parse and validate input
     const body = await req.json();
@@ -70,6 +75,7 @@ export async function POST(req: Request) {
       data: {
         name: data.name,
         description: data.description ?? null,
+        location: data.location,
         startAt: startsAt,
         private: data.isPrivate,
         createdById: user.id, // Tie to current user
@@ -92,4 +98,31 @@ export async function POST(req: Request) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
+}
+
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json();
+
+  // Simple Saskatoon validation
+  if (!body.location?.includes("Saskatoon")) {
+    return NextResponse.json({ error: "Location must be in Saskatoon" }, { status: 400 });
+  }
+
+  const startsAt = new Date(`${body.date}T${body.time}:00`);
+
+  const event = await db.event.update({
+    where: { id: params.id },
+    data: {
+      name: body.name,
+      description: body.desc ?? null,
+      startAt: startsAt,
+      private: body.isPrivate,
+      location: body.location,
+    },
+  });
+
+  return NextResponse.json({ event }, { status: 200 });
 }

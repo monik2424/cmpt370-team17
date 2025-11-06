@@ -1,52 +1,128 @@
 /**
- * delete /api/events/:id
+ * /api/events/[id]
  * ----------------------------------------------------------------------------
- *   Deletes a single Event from the database.
- *   Only the Host who originally created the event may delete it.
+ * DELETE  -> delete an event you created
+ * PUT     -> edit an event you created
  *
- *   - User must be authenticated
- *   - User.role must be "HOST"
- *   - Event.createdById must match session.user.id
- *
- *   :id -> The unique cuid() identifier for the event row
- *
- *   <DeleteEventButton /> sends DELETE requests here from /events
+ * Auth rules (updated for new schema):
+ * - Must be signed in
+ * - Providers are NOT allowed to create/edit/delete events
+ * - Only the creator (createdById) may modify/delete the event
  */
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import db from "@/modules/db";
 
-// DELETE /api/events/[id]
+/**
+ * DELETE /api/events/[id]
+ * Deletes a single Event the current user owns.
+ */
 export async function DELETE(
   _req: Request,
   { params }: { params: { id: string } }
 ) {
-  // Retrieve authenticated user
+  // must be signed in
   const session = await auth();
   const user = session?.user as any;
+  if (!user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // Must be signed in AND must be a Host
-  if (!user?.id || user.role !== "HOST") {
+  // providers are not allowed to modify events
+  if (user.role === "PROVIDER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Fetch the event owner field
+  // only the creator can delete
   const event = await db.event.findUnique({
     where: { id: params.id },
     select: { createdById: true },
   });
-
-  // No event found -> cannot delete
   if (!event) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-
-  // Hosts may only delete their own events
   if (event.createdById !== user.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  // Delete the event row and return standard success response
+
+
   await db.event.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
+}
+
+/**
+ * PUT /api/events/[id]
+ * Updates an existing Event the current user owns.
+ * Expects JSON: { name, desc, date, time, location, isPrivate }
+ * - date: "YYYY-MM-DD"
+ * - time: "HH:MM"
+ * - location must contain "Saskatoon"
+ */
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+
+  const session = await auth();
+  const user = session?.user as any;
+  if (!user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+
+  if (user.role === "PROVIDER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+
+  const existing = await db.event.findUnique({
+    where: { id: params.id },
+    select: { createdById: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (existing.createdById !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+
+  const body = await req.json();
+  const name = (body?.name ?? "").trim();
+  const desc = (body?.desc ?? "").trim();
+  const date = (body?.date ?? "").trim();      // "YYYY-MM-DD"
+  const time = (body?.time ?? "").trim();      // "HH:MM"
+  const location = (body?.location ?? "").trim();
+  const isPrivate = Boolean(body?.isPrivate);
+
+  if (!name) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+    return NextResponse.json({ error: "Invalid date/time" }, { status: 400 });
+  }
+
+  if (!location || !location.includes("Saskatoon")) {
+    return NextResponse.json({ error: "Location must be in Saskatoon" }, { status: 400 });
+  }
+
+
+  const startAt = new Date(`${date}T${time}:00`);
+  if (isNaN(startAt.getTime())) {
+    return NextResponse.json({ error: "Invalid startAt" }, { status: 400 });
+  }
+
+  const updated = await db.event.update({
+    where: { id: params.id },
+    data: {
+      name,
+      description: desc || null,
+      startAt,
+      private: isPrivate,
+      location,
+    },
+  });
+
+  return NextResponse.json({ event: updated }, { status: 200 });
 }
