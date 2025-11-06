@@ -24,6 +24,7 @@ export default function EventCreateForm() {
   // Individual form fields held in local component state
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [location, setLocation] = useState("");
   const [date, setDate] = useState(""); // yyyy-mm-dd
   const [time, setTime] = useState(""); // HH:MM
   const [isPrivate, setIsPrivate] = useState(true);
@@ -60,6 +61,7 @@ export default function EventCreateForm() {
         body: JSON.stringify({
           name,
           description: desc,
+          location,
           date,
           time,
           isPrivate,
@@ -108,6 +110,19 @@ export default function EventCreateForm() {
           disabled={loading}
         />
       </div>
+
+      <div>
+  <label className="block text-sm font-medium mb-1">Location</label>
+  <input
+    className="w-full rounded border px-3 py-2 dark:bg-gray-900"
+    placeholder="102 Spadina Crescent E, Saskatoon, SK S7K 0L3"
+    value={location}
+    onChange={(e) => setLocation(e.target.value)}
+    disabled={loading}
+  />
+  <p className="text-xs text-gray-500 mt-1">Must be a Saskatoon address.</p>
+</div>
+
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
