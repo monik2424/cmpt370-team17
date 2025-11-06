@@ -24,6 +24,9 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
+  // Optional provider relationship (only exists if user has provider account)
+  provider      Provider?
+  
   // Events created by this user (any user can create events)
   createdEvents Event[]   @relation("EventHost")
   
@@ -173,15 +176,4 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
-}
-
-// Keep the original Post model for backward compatibility
-model Post {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([createdAt])
-  @@map("posts")
 }
