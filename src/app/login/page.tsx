@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    loginType: 'user' as 'user' | 'provider'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,13 +23,23 @@ export default function LoginPage() {
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
+        loginType: formData.loginType,
         redirect: false
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        if (formData.loginType === 'provider') {
+          setError('Invalid credentials or you do not have a provider account');
+        } else {
+          setError('Invalid email or password');
+        }
       } else if (result?.ok) {
-        router.push('/dashboard');
+        // Redirect based on login type
+        if (formData.loginType === 'provider') {
+          router.push('/dashboard/provider');
+        } else {
+          router.push('/dashboard');
+        }
         router.refresh();
       }
     } catch (err) {
@@ -59,6 +70,37 @@ export default function LoginPage() {
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
+            {/* Login Type Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Login As
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="loginType"
+                    value="user"
+                    checked={formData.loginType === 'user'}
+                    onChange={(e) => setFormData({ ...formData, loginType: e.target.value as 'user' | 'provider' })}
+                    className="mr-2 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">User</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="loginType"
+                    value="provider"
+                    checked={formData.loginType === 'provider'}
+                    onChange={(e) => setFormData({ ...formData, loginType: e.target.value as 'user' | 'provider' })}
+                    className="mr-2 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Provider</span>
+                </label>
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email Address

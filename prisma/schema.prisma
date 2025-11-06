@@ -12,6 +12,7 @@ datasource db {
 }
 
 // Base User model - implements Alex's authentication requirements
+// Any user can be a host (create/join events)
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -22,14 +23,15 @@ model User {
   isVerified    Boolean   @default(false) // Email verification
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
-  // Relationships to specific user types
-  host          Host?
-  guest         Guest?
+  
+  // Optional provider relationship (only exists if user has provider account)
   provider      Provider?
   
-  // Events created by this user (if Host)
+  // Events created by this user (any user can create events)
   createdEvents Event[]   @relation("EventHost")
+  
+  // Events this user is attending (simple guest list)
+  attendingEvents Event[] @relation("EventAttendees")
   
   // Bookings made by this user
   bookings      Booking[]
@@ -45,38 +47,8 @@ enum UserRole {
   ADMIN
 }
 
-// Host extends User - can create events
-model Host {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-  // Events created by this host
-  events Event[] @relation("HostEvents")
-
-  @@map("hosts")
-}
-
-// Guest extends User - can be invited to events
-model Guest {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventId       String?
-  event         Event?    @relation(fields: [eventId], references: [id])
-  rsvpStatus    RSVPStatus @default(PENDING)
-  invitedAt     DateTime?
-  respondedAt   DateTime?
-  guestLocation String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  @@map("guests")
-}
-
-// Provider extends User - can provide services for events
+// Provider - stores business info for users who provide services
+// Only exists when User.isProvider = true
 model Provider {
   id                   String    @id @default(cuid())
   userId               String    @unique
@@ -98,15 +70,9 @@ model Provider {
   @@map("providers")
 }
 
-// RSVP status enum
-enum RSVPStatus {
-  PENDING
-  ATTENDING
-  DECLINED
-  MAYBE
-}
 
 // Central Event model
+// Any user can create events (no Host model needed)
 model Event {
   id            String      @id @default(cuid())
   name          String
@@ -120,16 +86,14 @@ model Event {
   private       Boolean     @default(false)
 
   // Relationships
-  hostId        String?
-  host          Host?       @relation("HostEvents", fields: [hostId], references: [id])
-  createdById   String?     // Alternative: direct user relationship
-  createdBy     User?       @relation("EventHost", fields: [createdById], references: [id])
+  createdById   String      // User who created the event (any user can create)
+  createdBy     User        @relation("EventHost", fields: [createdById], references: [id])
   
-  providerId    String?
+  providerId    String?     // Provider for this event (if applicable)
   provider      Provider?   @relation("ProviderEvents", fields: [providerId], references: [id])
   
   // Event relationships
-  guests        Guest[]
+  attendees     User[]    @relation("EventAttendees") // Guest list - users attending this event
   bookings      Booking[]
   keywords      KeyWord[]   @relation("EventKeywords")
   categoryTags  CategoryTag[] @relation("EventCategories")
@@ -143,7 +107,7 @@ model Booking {
   id            String        @id @default(cuid())
   eventId       String
   event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  providerId    String
+  providerId    String        // Provider (User with isProvider=true)
   provider      Provider      @relation(fields: [providerId], references: [id])
   userId        String?       // User who made the booking
   user          User?         @relation(fields: [userId], references: [id])
@@ -212,15 +176,4 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
-}
-
-// Keep the original Post model for backward compatibility
-model Post {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([createdAt])
-  @@map("posts")
 }
