@@ -8,7 +8,8 @@ export default function RegisterPage() {
     email: '',
     password: '',
     name: '',
-    role: 'GUEST' as 'GUEST' | 'HOST' 
+    accountType: 'USER' as 'USER' | 'PROVIDER',
+    businessName: '' // Only for providers
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -113,20 +114,39 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                User Role
+              <label htmlFor="accountType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Account Type
               </label>
               <select
-                id="role"
-                name="role"
-                value={formData.role}
+                id="accountType"
+                name="accountType"
+                value={formData.accountType}
                 onChange={handleChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
               >
-                <option value="GUEST">Guest - Attend events</option>
-                <option value="HOST">Host - Create events</option>
+                <option value="USER">User - Attend and create events</option>
+                <option value="PROVIDER">Provider - Offer services for events</option>
               </select>
             </div>
+
+            {/* Show business name field only for providers */}
+            {formData.accountType === 'PROVIDER' && (
+              <div>
+                <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Business Name
+                </label>
+                <input
+                  id="businessName"
+                  name="businessName"
+                  type="text"
+                  required
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Enter your business name"
+                />
+              </div>
+            )}
           </div>
 
           {error && (

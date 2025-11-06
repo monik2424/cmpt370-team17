@@ -7,13 +7,22 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(1),
-  role: z.enum(['GUEST', 'HOST', 'PROVIDER'])
+  accountType: z.enum(['USER', 'PROVIDER']),
+  businessName: z.string().optional()
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, role } = registerSchema.parse(body);
+    const { email, password, name, accountType, businessName } = registerSchema.parse(body);
+
+    // Validate provider requirements
+    if (accountType === 'PROVIDER' && !businessName) {
+      return NextResponse.json(
+        { error: 'Business name is required for provider accounts' },
+        { status: 400 }
+      );
+    }
 
     // Check if email already exists
     const existingUser = await db.user.findUnique({
@@ -30,31 +39,34 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
-    const user = await db.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        role
-      }
-    });
+    // Set role based on account type
+    const role = accountType === 'PROVIDER' ? 'PROVIDER' : 'GUEST';
 
-    // Create role-specific record
-    if (role === 'HOST') {
-      await db.host.create({
-        data: { userId: user.id }
-      });
-    } else if (role === 'PROVIDER') {
-      await db.provider.create({
-        data: { 
-          userId: user.id, 
-          businessName: `${name}'s Business` 
+    // Create user with provider record if needed
+    if (accountType === 'PROVIDER') {
+      // Create user and provider in a transaction
+      const user = await db.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name,
+          role,
+          provider: {
+            create: {
+              businessName: businessName!,
+            }
+          }
         }
       });
     } else {
-      await db.guest.create({
-        data: { userId: user.id }
+      // Create regular user
+      await db.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name,
+          role
+        }
       });
     }
 
