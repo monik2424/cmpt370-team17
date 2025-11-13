@@ -100,6 +100,7 @@ function MapControls({
 }
 
 export default function MapPageClient({ user, events }: Props) {
+
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
   const [userLocation, setUserLocation] = useState<{
