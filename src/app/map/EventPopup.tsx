@@ -8,7 +8,6 @@ import {
   MapPin,
   Users,
   Heart,
-  Share2,
   Send,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -66,7 +65,7 @@ export default function EventPopup({
 
         {/* description */}
         {description && (
-          <p className="mt-2 text-sm leading-relaxed text-gray-400">
+          <p className="mt-2 text-sm leading-relaxed text-gray-400 break-words">
             {description}
           </p>
         )}
@@ -138,7 +137,7 @@ export default function EventPopup({
             className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1a1a1a] px-3 py-2 font-medium ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]"
           >
             <Heart className="h-4 w-4 text-red-500" />
-            <span>Tracking</span>
+            <span>Track</span>
           </button>
 
           <button className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1a1a1a] px-3 py-2 font-medium ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]">
@@ -146,9 +145,6 @@ export default function EventPopup({
             <span>Get Directions</span>
           </button>
 
-          <button className="flex items-center justify-center rounded-md bg-[#1a1a1a] px-3 py-2 ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]">
-            <Share2 className="h-4 w-4" />
-          </button>
         </div>
       </motion.div>
     </AnimatePresence>
