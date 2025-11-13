@@ -12,6 +12,15 @@ import {
   Users,
   Film,
   Coffee,
+  Trophy,
+  Utensils,
+  Palette,
+  Sparkles, 
+  PartyPopper,
+  Church,
+  Joystick,
+  BookIcon,
+  Box,
 } from "lucide-react";
 
 interface EventMarkerProps {
@@ -30,6 +39,15 @@ const iconMap = {
   networking: Users,
   entertainment: Film,
   social: Coffee,
+  tournament: Trophy,
+  celebration: PartyPopper,
+  food: Utensils,
+  artshow: Palette,
+  seasonal: Sparkles,
+  community: Church,
+  tech: Joystick,
+  education: BookIcon,
+  other: Box,
 };
 
 export default function EventMarker({

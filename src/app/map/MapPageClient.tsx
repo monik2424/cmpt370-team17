@@ -26,122 +26,30 @@ const INITIAL_VIEW = {
   pitch: 0,
 };
 
-const saskatoonEvents = [
-  {
-    id: 1,
-    title: "Naresh's Birthday Party",
-    type: "birthday",
-    date: "2025-10-15",
-    time: "7:00 PM",
-    location: "310 Wakabayashi Cres",
-    attendees: 45,
-    lat: 52.1844,
-    lng: -106.6324,
-    description: "Join us for a special celebration!",
-    isTracking: true,
-  },
-  {
-    id: 2,
-    title: "River Landing Music Fest",
-    type: "concert",
-    date: "2025-10-20",
-    time: "6:00 PM",
-    location: "River Landing Amphitheatre",
-    attendees: 2500,
-    lat: 52.1235,
-    lng: -106.6767,
-    description: "Live performances by local bands on the riverfront.",
-    isTracking: false,
-  },
-  {
-    id: 3,
-    title: "Prairie Tech Summit 2025",
-    type: "conference",
-    date: "2025-10-18",
-    time: "9:00 AM",
-    location: "TCU Place Convention Centre",
-    attendees: 850,
-    lat: 52.1276,
-    lng: -106.6705,
-    description: "Latest in technology and innovation on the prairies.",
-    isTracking: true,
-  },
-  {
-    id: 4,
-    title: "Morning Yoga in the Park",
-    type: "sports",
-    date: "2025-10-12",
-    time: "8:00 AM",
-    location: "Kiwanis Memorial Park",
-    attendees: 120,
-    lat: 52.1339,
-    lng: -106.6655,
-    description: "Sunrise stretch and mindfulness by the river.",
-    isTracking: false,
-  },
-  {
-    id: 5,
-    title: "Remai Modern Gallery Opening",
-    type: "art",
-    date: "2025-10-22",
-    time: "5:00 PM",
-    location: "Remai Modern",
-    attendees: 300,
-    lat: 52.1231,
-    lng: -106.6779,
-    description: "Contemporary art showcase and reception.",
-    isTracking: true,
-  },
-  {
-    id: 6,
-    title: "Startup Founder Mixer",
-    type: "networking",
-    date: "2025-10-16",
-    time: "6:30 PM",
-    location: "Co.Labs Innovation Hub",
-    attendees: 180,
-    lat: 52.1304,
-    lng: -106.6632,
-    description: "Connect with Saskatoon founders and startup teams.",
-    isTracking: false,
-  },
-  {
-    id: 7,
-    title: "Indie Film Night",
-    type: "entertainment",
-    date: "2025-10-19",
-    time: "7:30 PM",
-    location: "Broadway Theatre",
-    attendees: 95,
-    lat: 52.1208,
-    lng: -106.6567,
-    description: "Independent film screening and Q&A.",
-    isTracking: true,
-  },
-  {
-    id: 8,
-    title: "Coffee & Code Meetup",
-    type: "social",
-    date: "2025-10-14",
-    time: "10:00 AM",
-    location: "City Perks Coffeehouse",
-    attendees: 35,
-    lat: 52.1352,
-    lng: -106.6475,
-    description: "Casual coding session with other devs.",
-    isTracking: false,
-  },
-];
+// shape of events coming from the DB -> mapped in page.tsx
+export type EventForMap = {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  time: string;
+  location: string;
+  attendees: number;
+  lat: number;
+  lng: number;
+  description?: string;
+  isTracking: boolean;
+};
 
 type Props = {
   user: {
     name?: string;
   };
+  events: EventForMap[];
 };
 
 // For Tracking Route Line
 
-// A single LineString feature with coordinates [lng, lat][]
 type RouteFeature = {
   type: "Feature";
   geometry: {
@@ -151,7 +59,6 @@ type RouteFeature = {
   properties: Record<string, unknown>;
 };
 
-// A FeatureCollection wrapper for the route
 type RouteFeatureCollection = {
   type: "FeatureCollection";
   features: RouteFeature[];
@@ -192,13 +99,14 @@ function MapControls({
   );
 }
 
-export default function MapPageClient({ user }: Props) {
-  const [activeMarkerId, setActiveMarkerId] = useState<number | null>(null);
+export default function MapPageClient({ user, events }: Props) {
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
   const [userLocation, setUserLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
+
   const [isTrackingRoute, setIsTrackingRoute] = useState(false);
   const [travelInfo, setTravelInfo] = useState<{
     driving?: { distance: number; duration: number };
@@ -206,21 +114,19 @@ export default function MapPageClient({ user }: Props) {
     cycling?: { distance: number; duration: number };
   } | null>(null);
 
-  // route line driving route
-  const [routeGeoJSON, setRouteGeoJSON] = useState<RouteFeatureCollection | null>(null);
+  const [routeGeoJSON, setRouteGeoJSON] =
+    useState<RouteFeatureCollection | null>(null);
 
-  // 3D mode state
   const [is3D, setIs3D] = useState(false);
 
-  // ref to map
   const mapRef = useRef<MapRef | null>(null);
   const setMapRef = useCallback((instance: MapRef | null) => {
     mapRef.current = instance;
   }, []);
 
   const activeEvent = useMemo(
-    () => saskatoonEvents.find((e) => e.id === activeMarkerId) ?? null,
-    [activeMarkerId]
+    () => events.find((e) => e.id === activeMarkerId) ?? null,
+    [activeMarkerId, events]
   );
 
   const handleZoomIn = useCallback(() => {
@@ -230,7 +136,8 @@ export default function MapPageClient({ user }: Props) {
   const handleZoomOut = useCallback(() => {
     mapRef.current?.zoomOut({ duration: 200 });
   }, []);
-// Mapbox 3D buildings layer
+
+  // Mapbox 3D buildings layer
   type MaybeSymbolLayer = {
     id: string;
     type?: string;
@@ -327,7 +234,6 @@ export default function MapPageClient({ user }: Props) {
     });
   }, [add3DBuildingsLayer, remove3DBuildingsLayer]);
 
-  // keep 3D layer if style reloads
   useEffect(() => {
     const mapInstance = mapRef.current?.getMap();
     if (!mapInstance) {
@@ -345,9 +251,7 @@ export default function MapPageClient({ user }: Props) {
       mapInstance.off("style.load", handleStyleLoad);
     };
   }, [is3D, add3DBuildingsLayer]);
-  // Persona 3 User Story 2: I can view the event 
-  // I’m participating in on the map so that I can track the distance and time it’ll take me to go from my location to the event.
-  
+
   // geolocation (get user position once)
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -424,7 +328,10 @@ export default function MapPageClient({ user }: Props) {
             };
 
             if (key === "driving" && route0.geometry) {
-              const lineCoords = route0.geometry.coordinates as [number, number][];
+              const lineCoords = route0.geometry.coordinates as [
+                number,
+                number
+              ][];
 
               drivingGeoJSON = {
                 type: "FeatureCollection",
@@ -451,7 +358,8 @@ export default function MapPageClient({ user }: Props) {
     },
     []
   );
-  const handleMarkerClick = (id: number) => {
+
+  const handleMarkerClick = (id: string) => {
     setActiveMarkerId((prev) => (prev === id ? null : id));
     setIsTrackingRoute(false);
     setRouteGeoJSON(null);
@@ -519,28 +427,26 @@ export default function MapPageClient({ user }: Props) {
                 Saskatoon Events
               </h1>
 
-              <div className="hidden space-x-4 md:flex">
-                <a
-                  href="/dashboard"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
-                >
-                  Dashboard
-                </a>
+              <a
+                href="/dashboard"
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
+              >
+                Dashboard
+              </a>
 
-                <a
-                  href="/events"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
-                >
-                  Events
-                </a>
+              <a
+                href="/events"
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
+              >
+                Events
+              </a>
 
-                <a
-                  href="/map"
-                  className="rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text-white"
-                >
-                  Map
-                </a>
-              </div>
+              <a
+                href="/map"
+                className="rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text.white"
+              >
+                Map
+              </a>
             </div>
             <div className="flex items-center">
               <span className="text-sm text-gray-300">{user?.name}</span>
@@ -564,7 +470,7 @@ export default function MapPageClient({ user }: Props) {
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary text-white dark:text-white">
-                  {saskatoonEvents.length}
+                  {events.length}
                 </div>
                 <div className="text-xs text-muted-foreground text-gray-400">
                   Events
@@ -573,7 +479,7 @@ export default function MapPageClient({ user }: Props) {
 
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary text-white dark:text-white">
-                  {saskatoonEvents.filter((e) => e.isTracking).length}
+                  {events.filter((e) => e.isTracking).length}
                 </div>
                 <div className="text-xs text-muted-foreground text-gray-400">
                   Tracking
@@ -589,7 +495,7 @@ export default function MapPageClient({ user }: Props) {
         <div className={PAGE_SHELL_CLASSES + " relative flex w-full"}>
           <div className="relative flex-1 overflow-hidden rounded-md border border-border bg-black/5 shadow-sm dark:bg-black/20">
             {!MAPBOX_TOKEN ? (
-              <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-muted-foreground text-sm text-muted-foreground">
+              <div className="flex h.full w.full items-center justify-center rounded-md border border-dashed border-muted-foreground text-sm text-muted-foreground">
                 Missing Mapbox token
               </div>
             ) : (
@@ -612,17 +518,16 @@ export default function MapPageClient({ user }: Props) {
                           "line-cap": "round",
                         }}
                         paint={{
-                          "line-color": "#00bfff", 
+                          "line-color": "#00bfff",
                           "line-width": 4,
                           "line-opacity": 0.9,
                         }}
                       />
                     </Source>
                   )}
-                  {/* Persona 3 User Story 1:  I want to be able to see different icons on the interactive map so that 
-                  I can quickly distinguish what the events are without even having to click on them.*/}
+
                   {/* each event as a marker */}
-                  {saskatoonEvents.map((event) => (
+                  {events.map((event) => (
                     <Marker
                       key={event.id}
                       longitude={event.lng}
@@ -642,7 +547,7 @@ export default function MapPageClient({ user }: Props) {
                           />
 
                           {activeMarkerId === event.id && (
-                            <p className="mt-1 max-w-[160px] rounded-md bg-white/90 px-2 py-1 text-center text-[11px] font-medium leading-snug text-black shadow dark:bg-black/90 dark:text-white">
+                            <p className="mt-1 max-w-[160px] rounded-md bg.white/90 px-2 py-1 text-center text-[11px] font-medium leading-snug text-black shadow dark:bg-black/90 dark:text-white">
                               {event.title}
                             </p>
                           )}
