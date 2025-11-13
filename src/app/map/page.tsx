@@ -254,6 +254,7 @@ export default async function MapPage() {
       lng,
       description: e.description ?? undefined,
       isTracking,
+      tags: tagNames,
     });
   }
 

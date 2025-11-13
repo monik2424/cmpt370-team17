@@ -57,6 +57,7 @@ export type EventForMap = {
   lng: number;
   description?: string;
   isTracking: boolean;
+  tags: string[];
 };
 
 export type MapUser = {
@@ -599,6 +600,7 @@ export default function MapPageClient({ user, events }: Props) {
                           time={activeEvent.time}
                           location={activeEvent.location}
                           attendees={activeEvent.attendees}
+                          tags={activeEvent.tags}
                           onClose={() => {
                             setActiveMarkerId(null);
                             setIsTrackingRoute(false);

@@ -20,6 +20,7 @@ interface EventPopupProps {
   time: string;
   location: string;
   attendees: number;
+  tags: string[];
   onClose: () => void;
   onStartTracking: () => void;
 }
@@ -31,6 +32,7 @@ export default function EventPopup({
   time,
   location,
   attendees,
+  tags,
   onClose,
   onStartTracking,
 }: EventPopupProps) {
@@ -62,14 +64,18 @@ export default function EventPopup({
         </button>
 
         {/* badges */}
-        <div className="mb-2 flex flex-wrap gap-2 pr-8">
-          <span className="inline-flex items-center rounded-md border border-yellow-400/40 bg-yellow-400/10 px-2 py-0.5 text-[11px] font-medium text-yellow-400">
-            Featured
-          </span>
-          <span className="inline-flex items-center rounded-md border border-yellow-400/40 bg-yellow-400/10 px-2 py-0.5 text-[11px] font-medium text-yellow-400">
-            Tracking Available
-          </span>
-        </div>
+        {tags.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2 pr-8">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center rounded-md border border-yellow-400/40 bg-yellow-400/10 px-2 py-0.5 text-[11px] font-medium text-yellow-400"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* title */}
         <h2 className="text-xl font-semibold leading-tight">{title}</h2>
