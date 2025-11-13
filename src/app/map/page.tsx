@@ -213,7 +213,7 @@ export default async function MapPage() {
     let lat = e.map?.latitude ?? null;
     let lng = e.map?.longitude ?? null;
 
-    // If we only have a string address, geocode it
+    // string address, geocode it
     if ((lat == null || lng == null) && e.location) {
       const coords = await geocodeAddress(e.location);
       if (coords) {

@@ -10,6 +10,7 @@ import {
   Heart,
   Send,
 } from "lucide-react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface EventPopupProps {
@@ -33,6 +34,16 @@ export default function EventPopup({
   onClose,
   onStartTracking,
 }: EventPopupProps) {
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLocation = () => {
+    navigator.clipboard.writeText(location).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500); // hide after 1.5sec
+    });
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -50,7 +61,7 @@ export default function EventPopup({
           ✕
         </button>
 
-        {/* badges row */}
+        {/* badges */}
         <div className="mb-2 flex flex-wrap gap-2 pr-8">
           <span className="inline-flex items-center rounded-md border border-yellow-400/40 bg-yellow-400/10 px-2 py-0.5 text-[11px] font-medium text-yellow-400">
             Featured
@@ -131,7 +142,8 @@ export default function EventPopup({
 
         {/* footer actions */}
         <div className="mt-6 flex flex-col gap-3 text-sm text-white sm:flex-row sm:items-stretch">
-          {/* TRACKING now calls parent to start tracking */}
+
+          {/* TRACK */}
           <button
             onClick={onStartTracking}
             className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1a1a1a] px-3 py-2 font-medium ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]"
@@ -140,9 +152,38 @@ export default function EventPopup({
             <span>Track</span>
           </button>
 
-          <button className="flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1a1a1a] px-3 py-2 font-medium ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]">
+          {/* COPY ADDRESS */}
+          <button
+            onClick={handleCopyLocation}
+            className="relative flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1a1a1a] px-3 py-2 font-medium ring-1 ring-[#2a2a2a] hover:bg-[#1f1f1f]"
+          >
             <Send className="h-4 w-4" />
-            <span>Get Directions</span>
+
+            {/* COPIED FEEDBACK */}
+            <AnimatePresence mode="wait">
+              {copied ? (
+                <motion.span
+                  key="copied"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18 }}
+                  className="text-green-400 font-medium"
+                >
+                  Copied!
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="getdir"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  Get Directions
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
 
         </div>

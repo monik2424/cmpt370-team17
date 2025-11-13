@@ -26,11 +26,29 @@ const INITIAL_VIEW = {
   pitch: 0,
 };
 
-// shape of events coming from the DB -> mapped in page.tsx
+// ---- Shared types ---------------------------------------------------
+
 export type EventForMap = {
   id: string;
   title: string;
-  type: string;
+  type:
+    | "birthday"
+    | "concert"
+    | "conference"
+    | "sports"
+    | "art"
+    | "networking"
+    | "entertainment"
+    | "social"
+    | "tournament"
+    | "celebration"
+    | "food"
+    | "artshow"
+    | "seasonal"
+    | "community"
+    | "tech"
+    | "education"
+    | "other";
   date: string;
   time: string;
   location: string;
@@ -41,10 +59,12 @@ export type EventForMap = {
   isTracking: boolean;
 };
 
+export type MapUser = {
+  name?: string | null;
+};
+
 type Props = {
-  user: {
-    name?: string;
-  };
+  user: MapUser;
   events: EventForMap[];
 };
 
@@ -100,7 +120,6 @@ function MapControls({
 }
 
 export default function MapPageClient({ user, events }: Props) {
-
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
   const [userLocation, setUserLocation] = useState<{
@@ -478,14 +497,7 @@ export default function MapPageClient({ user, events }: Props) {
                 </div>
               </div>
 
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary text-white dark:text-white">
-                  {events.filter((e) => e.isTracking).length}
-                </div>
-                <div className="text-xs text-muted-foreground text-gray-400">
-                  Tracking
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>
