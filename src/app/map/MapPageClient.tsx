@@ -2,19 +2,26 @@
 // mcb540
 "use client";
 
-import {
-  useState,
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import MapboxMap, { Marker, MapRef, Source, Layer } from "react-map-gl/mapbox";
 import EventMarker from "./EventMarker";
 import EventPopup from "./EventPopup";
 import TrackingPopup from "./TrackingPopup";
-import { Box } from "lucide-react";
+import {
+  Box,
+  MapPin,
+  Dumbbell,
+  Coffee,
+  Music,
+  PartyPopper,
+  Utensils,
+  Palette,
+  Sparkles,
+  Church,
+  Joystick,
+  BookIcon,
+} from "lucide-react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "";
 
@@ -120,6 +127,95 @@ function MapControls({
   );
 }
 
+type EventType = EventForMap["type"];
+
+type FilterConfig = {
+  id: string;
+  label: string;
+  types: EventType[];
+  Icon: React.ComponentType<{ className?: string }>;
+};
+
+const FILTERS: FilterConfig[] = [
+  // sports
+  {
+    id: "sports",
+    label: "Sports",
+    types: ["sports"],
+    Icon: Dumbbell,
+  },
+  // social
+  {
+    id: "social",
+    label: "Social",
+    types: ["social"],
+    Icon: Coffee,
+  },
+  // music (concerts)
+  {
+    id: "music",
+    label: "Music",
+    types: ["concert"],
+    Icon: Music,
+  },
+  // celebration (includes birthdays)
+  {
+    id: "celebration",
+    label: "Celebration",
+    types: ["celebration", "birthday"],
+    Icon: PartyPopper,
+  },
+  // food & dining
+  {
+    id: "food",
+    label: "Food & Dining",
+    types: ["food"],
+    Icon: Utensils,
+  },
+  // arts & culture (art + artshow)
+  {
+    id: "arts",
+    label: "Arts & Culture",
+    types: ["art", "artshow"],
+    Icon: Palette,
+  },
+  // seasonal
+  {
+    id: "seasonal",
+    label: "Seasonal",
+    types: ["seasonal"],
+    Icon: Sparkles,
+  },
+  // community
+  {
+    id: "community",
+    label: "Community",
+    types: ["community"],
+    Icon: Church,
+  },
+  // tech
+  {
+    id: "tech",
+    label: "Tech",
+    types: ["tech"],
+    Icon: Joystick,
+  },
+  // education
+  {
+    id: "education",
+    label: "Education",
+    types: ["education"],
+    Icon: BookIcon,
+  },
+  // other – also catches misc types
+  {
+    id: "other",
+    label: "Other",
+    types: ["other", "conference", "networking", "entertainment", "tournament"],
+    Icon: Box,
+  },
+];
+
 export default function MapPageClient({ user, events }: Props) {
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
@@ -139,6 +235,46 @@ export default function MapPageClient({ user, events }: Props) {
     useState<RouteFeatureCollection | null>(null);
 
   const [is3D, setIs3D] = useState(false);
+
+  // for event type filter
+  // empty array = "All Events" (no filter)
+  const [activeTypes, setActiveTypes] = useState<EventForMap["type"][]>([]);
+
+  const handleToggleFilter = (types: EventType[] | "all") => {
+    if (types === "all") {
+      setActiveTypes([]); // reset to all
+      return;
+    }
+
+    setActiveTypes((prev) => {
+      const allIncluded = types.every((t) => prev.includes(t));
+
+      if (allIncluded) {
+        // turn OFF: remove all these types
+        return prev.filter((t) => !types.includes(t));
+      }
+
+      // turn ON: add any missing types
+      const next = [...prev];
+      for (const t of types) {
+        if (!next.includes(t)) next.push(t);
+      }
+      return next;
+    });
+  };
+
+  const isAllActive = activeTypes.length === 0;
+
+  const isFilterActive = (types: EventType[]) =>
+    types.some((t) => activeTypes.includes(t));
+
+  const filteredEvents = useMemo(
+    () =>
+      activeTypes.length === 0
+        ? events
+        : events.filter((e) => activeTypes.includes(e.type)),
+    [events, activeTypes]
+  );
 
   const mapRef = useRef<MapRef | null>(null);
   const setMapRef = useCallback((instance: MapRef | null) => {
@@ -178,9 +314,7 @@ export default function MapPageClient({ user, events }: Props) {
     const layers = map.getStyle().layers as MaybeSymbolLayer[];
     const labelLayerId = layers.find(
       (layer) =>
-        layer.type === "symbol" &&
-        layer.layout &&
-        layer.layout["text-field"]
+        layer.type === "symbol" && layer.layout && layer.layout["text-field"]
     )?.id;
 
     map.addLayer(
@@ -497,8 +631,6 @@ export default function MapPageClient({ user, events }: Props) {
                   Events
                 </div>
               </div>
-
-              
             </div>
           </div>
         </div>
@@ -506,8 +638,44 @@ export default function MapPageClient({ user, events }: Props) {
 
       {/* MAP SECTION */}
       <main className="flex flex-1 bg-gray-900/10 py-4 dark:bg-gray-900">
-        <div className={PAGE_SHELL_CLASSES + " relative flex w-full"}>
-          <div className="relative flex-1 overflow-hidden rounded-md border border-border bg-black/5 shadow-sm dark:bg-black/20">
+        <div className={PAGE_SHELL_CLASSES + " flex w-full flex-col gap-3"}>
+          {/* EVENT TYPE FILTER BAR */}
+          <section>
+            <div className="mb-1 text-xs font-semibold tracking-wide text-gray-400">
+              EVENT TYPES
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {/* All Events first */}
+              <button
+                onClick={() => handleToggleFilter("all")}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
+                  isAllActive
+                    ? "border-yellow-500 bg-yellow-500 text-black shadow-sm"
+                    : "border-gray-600 bg-transparent text-gray-200 hover:border-gray-400"
+                }`}
+              >
+                <MapPin className="h-3 w-3" /> <span>All Events</span>
+              </button>
+              {FILTERS.map(({ id, label, types, Icon }) => {
+                const active = isFilterActive(types);
+                return (
+                  <button
+                    key={id}
+                    onClick={() => handleToggleFilter(types)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
+                      active
+                        ? "border-yellow-400 bg-yellow-400/10 text-yellow-200 shadow-sm"
+                        : "border-gray-600 bg-transparent text-gray-200 hover:border-gray-400"
+                    }`}
+                  >
+                    <Icon className="h-3 w-3" /> <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+          {/* MAP CARD */}
+          <div className="relative h-[640px] overflow-hidden rounded-md border border-border bg-black/5 shadow-sm dark:bg-black/20">
             {!MAPBOX_TOKEN ? (
               <div className="flex h.full w.full items-center justify-center rounded-md border border-dashed border-muted-foreground text-sm text-muted-foreground">
                 Missing Mapbox token
@@ -527,10 +695,7 @@ export default function MapPageClient({ user, events }: Props) {
                       <Layer
                         id="route-line"
                         type="line"
-                        layout={{
-                          "line-join": "round",
-                          "line-cap": "round",
-                        }}
+                        layout={{ "line-join": "round", "line-cap": "round" }}
                         paint={{
                           "line-color": "#00bfff",
                           "line-width": 4,
@@ -539,9 +704,8 @@ export default function MapPageClient({ user, events }: Props) {
                       />
                     </Source>
                   )}
-
                   {/* each event as a marker */}
-                  {events.map((event) => (
+                  {filteredEvents.map((event) => (
                     <Marker
                       key={event.id}
                       longitude={event.lng}
@@ -559,7 +723,6 @@ export default function MapPageClient({ user, events }: Props) {
                             isActive={activeMarkerId === event.id}
                             isTracking={event.isTracking}
                           />
-
                           {activeMarkerId === event.id && (
                             <p className="mt-1 max-w-[160px] rounded-md bg.white/90 px-2 py-1 text-center text-[11px] font-medium leading-snug text-black shadow dark:bg-black/90 dark:text-white">
                               {event.title}
@@ -569,7 +732,6 @@ export default function MapPageClient({ user, events }: Props) {
                       </div>
                     </Marker>
                   ))}
-
                   {/* user's current position */}
                   {userLocation && (
                     <Marker
@@ -578,19 +740,17 @@ export default function MapPageClient({ user, events }: Props) {
                       anchor="center"
                     >
                       <div className="relative">
-                        <span className="absolute inline-block h-6 w-6 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-blue-500/30 blur-[2px]" />
-                        <span className="relative inline-block h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-gray-900" />
+                        <span className="absolute inline-block h-6 w-6 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-blue-500/30 blur-[2px]" />{" "}
+                        <span className="relative inline-block h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-gray-900" />{" "}
                       </div>
                     </Marker>
                   )}
-
                   {/* top-left popup (event card) */}
                   {activeEvent && (
                     <div className="pointer-events-none absolute top-4 left-0 z-30">
                       <div
                         className={
-                          PAGE_SHELL_CLASSES +
-                          " pointer-events-auto max-w-xl"
+                          PAGE_SHELL_CLASSES + " pointer-events-auto max-w-xl"
                         }
                       >
                         <EventPopup
@@ -600,7 +760,7 @@ export default function MapPageClient({ user, events }: Props) {
                           time={activeEvent.time}
                           location={activeEvent.location}
                           attendees={activeEvent.attendees}
-                          tags={activeEvent.tags}
+                          tags={activeEvent.tags ?? []}
                           onClose={() => {
                             setActiveMarkerId(null);
                             setIsTrackingRoute(false);
@@ -613,7 +773,6 @@ export default function MapPageClient({ user, events }: Props) {
                     </div>
                   )}
                 </MapboxMap>
-
                 {/* map UI controls */}
                 <MapControls
                   onZoomIn={handleZoomIn}
@@ -622,7 +781,6 @@ export default function MapPageClient({ user, events }: Props) {
                 />
               </div>
             )}
-
             {/* bottom tracking popup */}
             {isTrackingRoute && travelInfo && activeEvent && (
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-40 flex justify-center pb-4">
