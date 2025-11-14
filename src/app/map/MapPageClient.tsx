@@ -5,7 +5,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import MapboxMap, { Marker, MapRef, Source, Layer } from "react-map-gl/mapbox";
-import EventMarker from "./EventMarker";
+import EventCluster from "./EventCluster";
 import EventPopup from "./EventPopup";
 import TrackingPopup from "./TrackingPopup";
 import {
@@ -293,6 +293,27 @@ export default function MapPageClient({ user, events }: Props) {
   const handleZoomOut = useCallback(() => {
     mapRef.current?.zoomOut({ duration: 200 });
   }, []);
+
+  // event cluster
+  const clusters = useMemo(() => {
+    const map = new Map<
+      string,
+      { lat: number; lng: number; events: EventForMap[] }
+    >();
+
+    for (const e of filteredEvents) {
+      // round to avoid tiny floating-point differences
+      const key = `${e.lat.toFixed(5)}:${e.lng.toFixed(5)}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.events.push(e);
+      } else {
+        map.set(key, { lat: e.lat, lng: e.lng, events: [e] });
+      }
+    }
+
+    return Array.from(map.values());
+  }, [filteredEvents]);
 
   // Mapbox 3D buildings layer
   type MaybeSymbolLayer = {
@@ -704,34 +725,28 @@ export default function MapPageClient({ user, events }: Props) {
                       />
                     </Source>
                   )}
-                  {/* each event as a marker */}
-                  {filteredEvents.map((event) => (
-                    <Marker
-                      key={event.id}
-                      longitude={event.lng}
-                      latitude={event.lat}
-                      anchor="bottom"
-                    >
-                      <div className="flex flex-col items-center">
-                        <button
-                          onClick={() => handleMarkerClick(event.id)}
-                          className="flex flex-col items-center focus:outline-none"
-                        >
-                          <EventMarker
-                            type={event.type}
-                            size="md"
-                            isActive={activeMarkerId === event.id}
-                            isTracking={event.isTracking}
-                          />
-                          {activeMarkerId === event.id && (
-                            <p className="mt-1 max-w-[160px] rounded-md bg.white/90 px-2 py-1 text-center text-[11px] font-medium leading-snug text-black shadow dark:bg-black/90 dark:text-white">
-                              {event.title}
-                            </p>
-                          )}
-                        </button>
-                      </div>
-                    </Marker>
-                  ))}
+                  {/* each cluster (one or many events in same location) */}
+                  {clusters.map((cluster, idx) => {
+                    const hasActive = cluster.events.some(
+                      (e) => e.id === activeMarkerId
+                    );
+
+                    return (
+                      <Marker
+                        key={`${cluster.lat}-${cluster.lng}-${idx}`}
+                        longitude={cluster.lng}
+                        latitude={cluster.lat}
+                        anchor="bottom"
+                      >
+                        <EventCluster
+                          events={cluster.events}
+                          isActive={hasActive}
+                          onEventClick={(event) => handleMarkerClick(event.id)}
+                        />
+                      </Marker>
+                    );
+                  })}
+
                   {/* user's current position */}
                   {userLocation && (
                     <Marker
