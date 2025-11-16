@@ -28,7 +28,7 @@ export default async function EventsPage() {
     ? await db.event.findMany({
         where: { createdById: user.id },
         orderBy: { startAt: 'asc' },
-        include: { categoryTags: true, attendees: true, provider: true }, // include provider info
+        include: { categoryTags: true, attendees: true, provider: true, guests: true }, // include guest info
       })
     : [];
 
@@ -143,21 +143,46 @@ export default async function EventsPage() {
                               </div>
                             )}
 
-                            {/* Attendees list/summary */}
+                            {/* Attendees/Guests list/summary */}
                             <div className="mt-3 text-xs text-gray-600 dark:text-gray-300">
-                              Attendees: {e.attendees.length}
-                              {e.attendees.length > 0 && (
-                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                                  {e.attendees.map(a => (
-                                    <span key={a.id}>{a.email}</span>
-                                  ))}
-                                </div>
+                              {e.private ? (
+                                <>
+                                  Invited Guests: {e.guests?.length || 0}
+                                  {e.guests && e.guests.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                      {e.guests.map(g => (
+                                        <span key={g.id}>{g.name} ({g.email})</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  Attendees: {e.attendees.length}
+                                  {e.attendees.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                      {e.attendees.map(a => (
+                                        <span key={a.id}>{a.email}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>
 
                           {/* Right: actions (owner) */}
                           <div className="flex flex-col items-end gap-2 shrink-0">
+                            {/* Manage Guests (private events only) */}
+                            {e.private && (
+                              <a
+                                href={`/events/${e.id}/guests`}
+                                className="text-green-600 hover:underline text-sm"
+                              >
+                                Manage Guests
+                              </a>
+                            )}
+
                             {/* Edit (owner only) */}
                             <a
                               href={`/events/${e.id}/edit`}
