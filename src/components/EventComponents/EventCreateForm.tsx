@@ -18,6 +18,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 
 interface Provider {
   id: string;
@@ -231,13 +232,17 @@ export default function EventCreateForm() {
         </p>
       </div>
 
-      <button
+      <ShimmerButton
         type="submit"
-        className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
         disabled={loading}
+        background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+        shimmerColor="#ffffff"
+        shimmerDuration="2s"
+        borderRadius="8px"
+        className="disabled:opacity-50 disabled:cursor-not-allowed font-medium"
       >
         {loading ? "Creating…" : "Create Event"}
-      </button>
+      </ShimmerButton>
 
       {ok && <div className="text-green-600 text-sm">{ok}</div>}
       {err && <div className="text-red-600 text-sm">{err}</div>}
