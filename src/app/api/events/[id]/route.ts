@@ -20,8 +20,9 @@ import db from "@/modules/db";
  */
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   // must be signed in
   const session = await auth();
   const user = session?.user as any;
@@ -36,7 +37,7 @@ export async function DELETE(
 
   // only the creator can delete
   const event = await db.event.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { createdById: true },
   });
   if (!event) {
@@ -47,7 +48,7 @@ export async function DELETE(
   }
 
 
-  await db.event.delete({ where: { id: params.id } });
+  await db.event.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }
 
@@ -61,8 +62,9 @@ export async function DELETE(
  */
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
 
   const session = await auth();
   const user = session?.user as any;
@@ -77,7 +79,7 @@ export async function PUT(
 
 
   const existing = await db.event.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { createdById: true },
   });
   if (!existing) {
@@ -114,7 +116,7 @@ export async function PUT(
   }
 
   const updated = await db.event.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       name,
       description: desc || null,

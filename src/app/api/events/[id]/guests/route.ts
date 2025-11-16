@@ -20,8 +20,9 @@ const addGuestSchema = z.object({
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
     const user = session?.user as any;
@@ -35,7 +36,7 @@ export async function GET(
 
     // Verify event exists and user is the creator
     const event = await db.event.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { 
         createdById: true, 
         private: true,
@@ -66,7 +67,7 @@ export async function GET(
 
     // Get all guests for this event
     const guests = await db.guest.findMany({
-      where: { eventId: params.id },
+      where: { eventId: id },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -85,8 +86,9 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
     const user = session?.user as any;
@@ -100,7 +102,7 @@ export async function POST(
 
     // Verify event exists and user is the creator
     const event = await db.event.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { 
         createdById: true, 
         private: true 
@@ -137,7 +139,7 @@ export async function POST(
       data: {
         name: data.name,
         email: data.email,
-        eventId: params.id,
+        eventId: id,
       },
     });
 

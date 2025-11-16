@@ -12,8 +12,9 @@ import db from '@/modules/db';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
     const user = session?.user as any;
@@ -27,7 +28,7 @@ export async function DELETE(
 
     // Find guest and verify permissions
     const guest = await db.guest.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         event: {
           select: {
@@ -53,7 +54,7 @@ export async function DELETE(
 
     // Delete guest
     await db.guest.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({
