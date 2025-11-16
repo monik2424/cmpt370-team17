@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { AnimatedBeam } from "@/components/magicui/animated-beam";
 
@@ -159,14 +160,17 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
             >
-              <Button
-                size="lg"
-                className="font-mono text-sm px-8 py-3 cursor-pointer bg-white text-black hover:bg-white/90 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              <ShimmerButton
                 onClick={() => router.push("/register")}
+                background="linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)"
+                shimmerColor="#667eea"
+                shimmerDuration="2.5s"
+                borderRadius="12px"
+                className="font-mono text-sm px-8 py-3 text-black hover:scale-105 transition-transform duration-300 shadow-lg hover:shadow-xl"
               >
                 Plan Your Event
                 <ArrowUpRightIcon className="ml-2 h-4 w-4" />
-              </Button>
+              </ShimmerButton>
             </motion.div>
           </div>
         </section>
