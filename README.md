@@ -70,26 +70,41 @@ This application is designed to connect event hosts with local venues and servic
    ```env
    DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/cmpt370?schema=public"
    AUTH_SECRET="your-super-secret-auth-key-change-in-production"
+   EMAIL_USER="your-email@gmail.com"
+   EMAIL_PASS="your-16-digit-app-password"
    ```
    
    Replace `YOUR_PASSWORD` with your PostgreSQL password.
 
-5. **Set up the database schema**
+5. **Set up Gmail for calendar invites**
+   
+   **Step 1 — Enable 2FA**
+   - Go to: https://myaccount.google.com/security
+   - Turn on 2-Step Verification
+   
+   **Step 2 — Generate App Password**
+   - Go to: https://myaccount.google.com/apppasswords
+   - App: "Mail" 
+   - Device: "Other (Custom)" → Enter "Event Platform"
+   - Copy the 16-digit password (format: `abcd efgh ijkl mnop`)
+   - Use this as your `EMAIL_PASS` in `.env.local`
+
+6. **Set up the database schema**
    ```bash
    npx prisma db push
    ```
 
-6. **Generate Prisma client**
+7. **Generate Prisma client**
    ```bash
    npx prisma generate
    ```
 
-7. **Start the development server**
+8. **Start the development server**
    ```bash
    npm run dev
    ```
 
-8. **Open your browser**
+9. **Open your browser**
    - Landing page: http://localhost:3000
    - Login: http://localhost:3000/login
    - Register: http://localhost:3000/register
