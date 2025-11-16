@@ -85,7 +85,8 @@ export default async function DashboardPage() {
 
   const createdEvents = await db.event.findMany({
     where: { createdById: user.id },
-    orderBy: { startAt: 'asc' }
+    orderBy: { startAt: 'asc' },
+    include: { provider: true }
   });
 
   // ✅ Fetch events the user is ATTENDING
@@ -95,7 +96,8 @@ export default async function DashboardPage() {
         some: { id: user.id }
       }
     },
-    orderBy: { startAt: 'asc' }
+    orderBy: { startAt: 'asc' },
+    include: { provider: true }
   });
 
   return (
