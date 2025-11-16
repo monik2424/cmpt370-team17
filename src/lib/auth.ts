@@ -94,6 +94,7 @@ export const authConfig: NextAuthConfig = {
         (session.user as any).role = token.role;
         (session.user as any).loginType = token.loginType;
         (session.user as any).isProvider = token.isProvider;
+
       }
       return session;
     }
