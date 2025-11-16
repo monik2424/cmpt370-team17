@@ -28,7 +28,7 @@ export default async function EventsPage() {
     ? await db.event.findMany({
         where: { createdById: user.id },
         orderBy: { startAt: 'asc' },
-        include: { categoryTags: true, attendees: true }, // include attendees if you show guestlist
+        include: { categoryTags: true, attendees: true, provider: true }, // include provider info
       })
     : [];
 
@@ -41,7 +41,7 @@ export default async function EventsPage() {
       createdById: { not: user.id },
     },
     orderBy: { startAt: 'asc' },
-    include: { categoryTags: true, attendees: true, createdBy: true },
+    include: { categoryTags: true, attendees: true, createdBy: true, provider: true },
   });
 
   return (
@@ -112,6 +112,13 @@ export default async function EventsPage() {
                             {e.location && (
                               <div className="text-sm text-gray-600 dark:text-gray-300">
                                 📍 {e.location}
+                              </div>
+                            )}
+
+                            {/* Provider */}
+                            {e.provider && (
+                              <div className="text-sm text-blue-600 dark:text-blue-400">
+                                🏢 Service Provider: {e.provider.businessName}
                               </div>
                             )}
 
@@ -207,6 +214,13 @@ export default async function EventsPage() {
                               {e.location && (
                                 <div className="text-sm text-gray-600 dark:text-gray-300">
                                   📍 {e.location}
+                                </div>
+                              )}
+
+                              {/* Provider */}
+                              {e.provider && (
+                                <div className="text-sm text-blue-600 dark:text-blue-400">
+                                  🏢 Service Provider: {e.provider.businessName}
                                 </div>
                               )}
 
