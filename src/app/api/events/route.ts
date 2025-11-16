@@ -32,6 +32,7 @@ const CreateEventSchema = z.object({
   time: z.string().regex(/^\d{2}:\d{2}$/),       // hh:mm
   isPrivate: z.boolean().default(true),
   tags: z.array(z.string().min(1).max(32)).max(12).optional().default([]),
+  providerId: z.string().optional().nullable(), // Optional provider selection
 });
 
 export async function GET(req: Request) {
@@ -91,6 +92,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid date/time" }, { status: 400 });
     }
 
+    // Validate provider if provided
+    if (data.providerId) {
+      const provider = await db.provider.findUnique({
+        where: { id: data.providerId },
+      });
+      if (!provider) {
+        return NextResponse.json({ error: "Provider not found" }, { status: 400 });
+      }
+    }
+
     // For each tag, either update the existing CategoryTag row,
     // or create a new one if it doesn't yet exist
     const tagRecords = await Promise.all(
@@ -112,6 +123,7 @@ export async function POST(req: Request) {
         startAt: startsAt,
         private: data.isPrivate,
         createdById: user.id, // Tie to current user
+        providerId: data.providerId || null, // Link to provider if selected
         // Link tags through the implicit M:N
         categoryTags: {
           connect: tagRecords.map((t) => ({ id: t.id })),
@@ -119,6 +131,7 @@ export async function POST(req: Request) {
       },
       include: {
         categoryTags: true,   // Return tags so UI can display them
+        provider: true,       // Return provider info if linked
       },
     });
 
