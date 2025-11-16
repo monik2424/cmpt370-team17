@@ -114,9 +114,14 @@ export default function EventCreateForm() {
       } else {
         // Show success message
         setOk("Event created!");
-        // Go back to Events list
-        router.push("/events");
-        //router.refresh();       // Refresh to show the new event
+        
+        // If it's a private event, redirect to guest management
+        if (isPrivate) {
+          router.push(`/events/${data.event.id}/guests`);
+        } else {
+          // Go back to Events list for public events
+          router.push("/events");
+        }
       }
     } catch {
       setErr("Network error.");
