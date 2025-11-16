@@ -34,6 +34,39 @@ const CreateEventSchema = z.object({
   tags: z.array(z.string().min(1).max(32)).max(12).optional().default([]),
 });
 
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    const user = session?.user as any;
+
+    if (!user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get events created by the user
+    const events = await db.event.findMany({
+      where: { createdById: user.id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        location: true,
+        startAt: true,
+        private: true,
+        createdAt: true,
+      },
+      orderBy: {
+        startAt: 'desc',
+      },
+    });
+
+    return NextResponse.json({ events });
+  } catch (error) {
+    console.error('Get events error:', error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     // Authenticate session and user
