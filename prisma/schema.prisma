@@ -98,6 +98,7 @@ model Event {
   keywords      KeyWord[]   @relation("EventKeywords")
   categoryTags  CategoryTag[] @relation("EventCategories")
   map           Map?
+  guests        Guest[]   // Invited guests for private events
 
   @@map("events")
 }
@@ -176,4 +177,17 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
+}
+
+// Guest model for private event invitations
+model Guest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([email, eventId]) // Prevent duplicate invites for same event
+  @@map("guests")
 }
