@@ -17,7 +17,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface Provider {
+  id: string;
+  businessName: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
 export default function EventCreateForm() {
   const router = useRouter();
@@ -29,10 +42,34 @@ export default function EventCreateForm() {
   const [time, setTime] = useState(""); // HH:MM
   const [isPrivate, setIsPrivate] = useState(true);
   const [tags, setTags] = useState(""); // comma separated
+  const [providerId, setProviderId] = useState(""); // selected provider
+
+  // Provider-related state
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+
+  // Fetch providers on component mount
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const response = await fetch('/api/providers');
+        if (response.ok) {
+          const data = await response.json();
+          setProviders(data.providers || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch providers:', error);
+      } finally {
+        setProvidersLoading(false);
+      }
+    };
+
+    fetchProviders();
+  }, []);
 
   // User clicking the Create button
   const onSubmit = async (e: React.FormEvent) => {
@@ -66,6 +103,7 @@ export default function EventCreateForm() {
           time,
           isPrivate,
           tags: tagList,
+          providerId: providerId || null,
         }),
       });
       const data = await res.json();
@@ -168,6 +206,29 @@ export default function EventCreateForm() {
           disabled={loading}
         />
         <p className="text-xs text-gray-500 mt-1">Comma-separated; max 12.</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Service Provider (Optional)</label>
+        <select
+          className="w-full rounded border px-3 py-2 dark:bg-gray-900"
+          value={providerId}
+          onChange={(e) => setProviderId(e.target.value)}
+          disabled={loading || providersLoading}
+        >
+          <option value="">No provider selected</option>
+          {providers.map((provider) => (
+            <option key={provider.id} value={provider.id}>
+              {provider.businessName}
+              {provider.address && ` - ${provider.address}`}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          {providersLoading 
+            ? "Loading providers..." 
+            : "Select a service provider for your event (catering, entertainment, etc.)"}
+        </p>
       </div>
 
       <button
