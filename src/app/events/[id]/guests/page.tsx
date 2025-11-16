@@ -13,10 +13,11 @@ import db from '@/modules/db';
 import GuestManagementClient from './GuestManagementClient';
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function GuestManagementPage({ params }: PageProps) {
+  const { id } = await params;
   const session = await auth();
   
   if (!session?.user) {
@@ -27,7 +28,7 @@ export default async function GuestManagementPage({ params }: PageProps) {
 
   // Fetch event and verify permissions
   const event = await db.event.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       guests: {
         orderBy: { createdAt: 'desc' },

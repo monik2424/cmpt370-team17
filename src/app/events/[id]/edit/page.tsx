@@ -3,12 +3,13 @@ import { auth } from "@/lib/auth";
 import db from "@/modules/db";
 import EditEventForm from "../../../../components/EventComponents/EditEventForm";
 
-export default async function EditEventPage({ params }: { params: { id: string } }) {
+export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const event = await db.event.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { attendees: true, categoryTags: true },
   });
 
