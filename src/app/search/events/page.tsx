@@ -15,6 +15,8 @@ import {
   Filter,
 } from "lucide-react";
 
+import { auth, signOut } from '@/lib/auth';
+
 // Stub event data - TODO: replace with connection to william's event data
 const stubEvents = [
   {
@@ -186,19 +188,13 @@ export default function EventsListingPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-          <button
-            onClick={() => handleNavigation("/login")}
-            className="px-4 py-2 hover:bg-white/20 bg-white/5 text-xs text-white font-mono transition cursor-pointer"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => handleNavigation("/register")}
-            className="px-4 py-2 hover:bg-blue-700 bg-blue-600 text-xs text-white font-mono transition cursor-pointer"
-          >
-            Register
-          </button>
-        </div>
+            <button
+              onClick={() => signOut({ redirectTo: '/' })}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-mono rounded-lg transition cursor-pointer"
+              >
+              Logout
+            </button>
+          </div>
       </nav>
       {/**************************** END of Adapted content from Landing Page ************************************/}
       

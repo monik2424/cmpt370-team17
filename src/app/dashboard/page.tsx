@@ -175,11 +175,16 @@ export default async function DashboardPage() {
                       </>
                     )}
                     <a href="/events" className="block w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium text-center">
-                      View Events
+                      View Your Events
                     </a>
                     {user.role !== 'PROVIDER' && (
                       <a href="/providers" className="block w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium text-center">
                         Browse Providers
+                      </a>
+                    )}
+                    {user.role !== 'PROVIDER' && (
+                      <a href="/search" className="block w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium text-center">
+                        Find New Events
                       </a>
                     )}
                   </div>

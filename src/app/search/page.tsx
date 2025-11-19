@@ -1,6 +1,3 @@
-/* EventListing page 
-   Main Author: Nicholas Kennedy
-   Lines 119-161 was kept similar in formatting to landing page by Kartik  */
 
 "use client";
 
@@ -19,6 +16,9 @@ import {
   BookIcon,
   Box
 } from "lucide-react"; // Used React icons
+
+import { auth, signOut } from '@/lib/auth';
+
 
 
 
@@ -111,52 +111,38 @@ const categories = [
  * will be different for sure
  */
 export default function CategoriesPage() {
+
+  
+
   const handleNavigation = (path: string) => {
     window.location.href = path;
   };
 
   return (
     <div className="min-h-screen bg-gray-900"> 
-      {/* Navigation */}
-      <nav className="relative z-10 flex items-center py-6 px-8 w-full mx-auto bg-gray-800/50 border-b border-gray-700">
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <img
-            src="/logo.png"
-            alt="CMPT370 Logo"
-            width="32"
-            height="32"
-            className="w-8 h-8"
-          />
-          <span className="ml-1 text-sm text-white font-mono">Saskatoon Events</span>
-        </div>
-        <div className="hidden font-mono bg-gray-800/80 md:flex gap-6 px-4 py-2 text-xs absolute left-1/2 text-white -translate-x-1/2 rounded-full">
-          <a href="/" className="px-3 py-2 hover:bg-gray-700 rounded-lg transition cursor-pointer">
-            Home
-          </a>
-          <a href="/events" className="px-3 py-2 hover:bg-gray-700 rounded-lg transition cursor-pointer">
-            Events
-          </a>
-          <a href="/venues" className="px-3 py-2 hover:bg-gray-700 rounded-lg transition cursor-pointer">
-            Venues
-          </a>
-          <a href="/providers" className="px-3 py-2 hover:bg-gray-700 rounded-lg transition cursor-pointer">
-            Providers ↗
-          </a>
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-          <button
-            onClick={() => handleNavigation("/login")}
-            className="px-4 py-2 hover:bg-gray-700 bg-gray-800 text-xs text-white font-mono transition cursor-pointer rounded-lg"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => handleNavigation("/register")}
-            className="px-4 py-2 hover:bg-blue-700 bg-blue-600 text-xs text-white font-mono transition cursor-pointer rounded-lg"
-          >
-            Register
-          </button>
+      <nav className="bg-white dark:bg-gray-800 shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center space-x-8">
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Saskatoon Events
+              </h1>
+              <div className="hidden md:flex space-x-4">
+                <a href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Dashboard
+                </a>
+                <a href="/events" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Events
+                </a>
+                <a href="/map" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Map
+                </a>
+                <a href="/search" className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Search
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </nav>
 
@@ -255,18 +241,12 @@ export default function CategoriesPage() {
               Can't find what you're looking for?
             </h2>
             <p className="text-sm font-mono text-gray-400 mb-6 max-w-xl mx-auto">
-              Browse all events or create your own custom event in Saskatoon
+              Create the event you've always wanted to attend!
             </p>
             <div className="flex gap-4 justify-center">
               <button
-                onClick={() => handleNavigation("/events")}
-                className="px-6 py-3 bg-gray-700 border border-gray-600 text-sm font-mono text-white hover:bg-gray-600 transition cursor-pointer rounded-lg"
-              >
-                Browse All Events
-              </button>
-              <button
-                onClick={() => handleNavigation("/create-event")}
-                className="px-6 py-3 bg-white text-gray-900 text-sm font-mono hover:bg-gray-100 transition cursor-pointer rounded-lg shadow-md"
+                onClick={() => handleNavigation("/events/create")}
+                className="px-18 py-3 bg-white text-black-900 text-lg font-mono hover:bg-gray-100 transition cursor-pointer rounded-lg shadow-md"
               >
                 Create Event
               </button>

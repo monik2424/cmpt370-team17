@@ -623,6 +623,13 @@ export default function MapPageClient({ user, events }: Props) {
               >
                 Map
               </a>
+
+              <a
+                href="/search"
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:text-white"
+              >
+                Search
+              </a>
             </div>
             <div className="flex items-center">
               <span className="text-sm text-gray-300">{user?.name}</span>
