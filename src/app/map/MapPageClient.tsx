@@ -236,13 +236,17 @@ export default function MapPageClient({ user, events }: Props) {
 
   const [is3D, setIs3D] = useState(false);
 
-  // for event type filter
-  // empty array = "All Events" (no filter)
+  // filter state
   const [activeTypes, setActiveTypes] = useState<EventForMap["type"][]>([]);
+
+  // which event is currently being tracked (for banner + popup title)
+  const [trackingEventTitle, setTrackingEventTitle] = useState<string | null>(
+    null
+  );
 
   const handleToggleFilter = (types: EventType[] | "all") => {
     if (types === "all") {
-      setActiveTypes([]); // reset to all
+      setActiveTypes([]);
       return;
     }
 
@@ -535,11 +539,9 @@ export default function MapPageClient({ user, events }: Props) {
     []
   );
 
+  // Only toggles popup; does NOT affect tracking
   const handleMarkerClick = (id: string) => {
     setActiveMarkerId((prev) => (prev === id ? null : id));
-    setIsTrackingRoute(false);
-    setRouteGeoJSON(null);
-    setTravelInfo(null);
   };
 
   const handleStartTracking = useCallback(async () => {
@@ -553,6 +555,7 @@ export default function MapPageClient({ user, events }: Props) {
     setTravelInfo(metrics);
     setRouteGeoJSON(drivingRoute);
     setIsTrackingRoute(true);
+    setTrackingEventTitle(activeEvent.title);
 
     if (
       mapRef.current &&
@@ -588,6 +591,7 @@ export default function MapPageClient({ user, events }: Props) {
     setIsTrackingRoute(false);
     setRouteGeoJSON(null);
     setTravelInfo(null);
+    setTrackingEventTitle(null);
   }, []);
 
   const PAGE_SHELL_CLASSES = "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
@@ -619,7 +623,7 @@ export default function MapPageClient({ user, events }: Props) {
 
               <a
                 href="/map"
-                className="rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text.white"
+                className="rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text-white"
               >
                 Map
               </a>
@@ -695,10 +699,24 @@ export default function MapPageClient({ user, events }: Props) {
               })}
             </div>
           </section>
+
+          {/* CURRENTLY TRACKING BANNER */}
+          {isTrackingRoute && trackingEventTitle && (
+            <div className="flex items-center gap-2 rounded-md border border-blue-500/40 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+              <MapPin className="h-3 w-3 text-blue-300" />
+              <span className="uppercase tracking-wide text-[10px] text-blue-300">
+                Currently tracking
+              </span>
+              <span className="truncate text-xs font-semibold">
+                {trackingEventTitle}
+              </span>
+            </div>
+          )}
+
           {/* MAP CARD */}
           <div className="relative h-[640px] overflow-hidden rounded-md border border-border bg-black/5 shadow-sm dark:bg-black/20">
             {!MAPBOX_TOKEN ? (
-              <div className="flex h.full w.full items-center justify-center rounded-md border border-dashed border-muted-foreground text-sm text-muted-foreground">
+              <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-muted-foreground text-sm text-muted-foreground">
                 Missing Mapbox token
               </div>
             ) : (
@@ -725,7 +743,8 @@ export default function MapPageClient({ user, events }: Props) {
                       />
                     </Source>
                   )}
-                  {/* each cluster (one or many events in same location) */}
+
+                  {/* clusters */}
                   {clusters.map((cluster, idx) => {
                     const hasActive = cluster.events.some(
                       (e) => e.id === activeMarkerId
@@ -747,7 +766,7 @@ export default function MapPageClient({ user, events }: Props) {
                     );
                   })}
 
-                  {/* user's current position */}
+                  {/* user location */}
                   {userLocation && (
                     <Marker
                       longitude={userLocation.lng}
@@ -755,12 +774,13 @@ export default function MapPageClient({ user, events }: Props) {
                       anchor="center"
                     >
                       <div className="relative">
-                        <span className="absolute inline-block h-6 w-6 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-blue-500/30 blur-[2px]" />{" "}
-                        <span className="relative inline-block h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-gray-900" />{" "}
+                        <span className="absolute inline-block h-6 w-6 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-blue-500/30 blur-[2px]" />
+                        <span className="relative inline-block h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-gray-900" />
                       </div>
                     </Marker>
                   )}
-                  {/* top-left popup (event card) */}
+
+                  {/* event popup (closing DOES NOT stop tracking anymore) */}
                   {activeEvent && (
                     <div className="pointer-events-none absolute top-4 left-0 z-30">
                       <div
@@ -777,10 +797,7 @@ export default function MapPageClient({ user, events }: Props) {
                           attendees={activeEvent.attendees}
                           tags={activeEvent.tags ?? []}
                           onClose={() => {
-                            setActiveMarkerId(null);
-                            setIsTrackingRoute(false);
-                            setRouteGeoJSON(null);
-                            setTravelInfo(null);
+                            setActiveMarkerId(null); // just hide details
                           }}
                           onStartTracking={handleStartTracking}
                         />
@@ -788,6 +805,7 @@ export default function MapPageClient({ user, events }: Props) {
                     </div>
                   )}
                 </MapboxMap>
+
                 {/* map UI controls */}
                 <MapControls
                   onZoomIn={handleZoomIn}
@@ -796,12 +814,13 @@ export default function MapPageClient({ user, events }: Props) {
                 />
               </div>
             )}
-            {/* bottom tracking popup */}
-            {isTrackingRoute && travelInfo && activeEvent && (
+
+            {/* bottom tracking popup – persists until Stop Tracking */}
+            {isTrackingRoute && travelInfo && trackingEventTitle && (
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-40 flex justify-center pb-4">
                 <div className="pointer-events-auto w-full max-w-xl px-4">
                   <TrackingPopup
-                    eventTitle={activeEvent.title}
+                    eventTitle={trackingEventTitle}
                     travelInfo={travelInfo}
                     onStopTracking={handleStopTracking}
                   />
