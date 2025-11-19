@@ -238,6 +238,25 @@ export default async function DashboardPage() {
                     Provider Dashboard
                   </h3>
                   
+                  {!provider && (
+                    <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200 font-medium mb-2">
+                        ⚠️ Provider Profile Not Found
+                      </p>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
+                        Your account has the PROVIDER role, but no provider profile exists in the database. 
+                        You need to create a provider profile to access provider features.
+                      </p>
+                      <a 
+                        href="/api/provider/seed" 
+                        className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 underline"
+                        target="_blank"
+                      >
+                        Run seed script to create provider profile →
+                      </a>
+                    </div>
+                  )}
+                  
                   {provider && (
                     <div className="mb-6">
                       <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
