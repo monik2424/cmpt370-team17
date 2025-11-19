@@ -72,6 +72,7 @@ This application is designed to connect event hosts with local venues and servic
    AUTH_SECRET="your-super-secret-auth-key-change-in-production"
    EMAIL_USER="your-email@gmail.com"
    EMAIL_PASS="your-16-digit-app-password"
+   NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ="pk.eyJ1Ijoic3RlcmJlbjI2IiwiYSI6ImNtZ2l3dGRwdjBkdzYybXBwdjV3ZnhjcmwifQ.ndf8OFDUNkQB8TYXgpflqw"
    ```
    
    Replace `YOUR_PASSWORD` with your PostgreSQL password.
