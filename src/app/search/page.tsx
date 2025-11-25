@@ -1,4 +1,4 @@
-
+// csy791 - Nicholas Kennedy
 "use client";
 
 import React from "react";
@@ -166,8 +166,8 @@ export default function CategoriesPage() {
               Find Events by <span style={{ color: "cyan", fontWeight: "bold"}}> Category</span>
             </h1>
             <p className="text-sm font-mono text-gray-400 max-w-2xl mx-auto">
-              Find the event you've been looking for! From sports tournaments to conventions, 
-              find the perfect event for any occasion based on type.
+              Find the event you've been looking for. From sports tournaments & meetups, to conventions & dining, 
+              there are always new oppurtunities around the corner!
             </p>
           </motion.div>
         </div>
