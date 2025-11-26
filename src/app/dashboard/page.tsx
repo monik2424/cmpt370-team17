@@ -244,14 +244,9 @@ export default async function DashboardPage() {
               </a>
             )}
             {user.role === 'PROVIDER' && (
-              <>
-                <a href="/provider/profile" className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-xl text-sm font-medium text-center transition-colors">
-                  ⚙️ Manage Profile
-                </a>
-                <a href="/provider/bookings" className="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-medium text-center transition-colors">
-                  📋 View Bookings
-                </a>
-              </>
+              <a href="/provider/bookings" className="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-medium text-center transition-colors">
+                📋 View Bookings
+              </a>
             )}
             {user.role !== 'PROVIDER' && (
               <>
@@ -360,14 +355,11 @@ export default async function DashboardPage() {
           {user.role === 'PROVIDER' && (
             <>
               {/* Business Info Card */}
-              <div className="bg-slate-800/50 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
+              <div className="bg-slate-800/50 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6 lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                     <span className="text-xl">🏪</span> Business Information
                   </h3>
-                  <a href="/provider/profile" className="text-sm text-blue-400 hover:text-blue-300">
-                    Edit →
-                  </a>
                 </div>
                 
                 {!provider ? (
@@ -387,29 +379,25 @@ export default async function DashboardPage() {
                     </a>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/50">
                       <p className="text-xs text-slate-400 mb-1">Business Name</p>
                       <p className="text-white font-medium">{provider.businessName}</p>
                     </div>
-                    {provider.address && (
-                      <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/50">
-                        <p className="text-xs text-slate-400 mb-1">Address</p>
-                        <p className="text-white">{provider.address}</p>
-                      </div>
-                    )}
-                    {provider.phone && (
-                      <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/50">
-                        <p className="text-xs text-slate-400 mb-1">Phone</p>
-                        <p className="text-white">{provider.phone}</p>
-                      </div>
-                    )}
+                    <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/50">
+                      <p className="text-xs text-slate-400 mb-1">Address</p>
+                      <p className="text-white">{provider.address || 'Not set'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/50">
+                      <p className="text-xs text-slate-400 mb-1">Phone</p>
+                      <p className="text-white">{provider.phone || 'Not set'}</p>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Provider Bookings Card */}
-              <div className="bg-slate-800/50 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
+              <div className="bg-slate-800/50 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6 lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                     <span className="text-xl">📋</span> Recent Bookings
@@ -424,21 +412,25 @@ export default async function DashboardPage() {
                     <p className="text-slate-400">No bookings yet. When hosts book your services, they'll appear here.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="flex gap-4 overflow-x-auto pb-2">
                     {providerBookings.map((booking: any) => (
                       <div
                         key={booking.id}
-                        className="p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-colors border border-slate-600/50"
+                        className="flex-shrink-0 w-64 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-colors border border-slate-600/50"
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-white">{booking.event.name}</h4>
+                        {/* Event image placeholder */}
+                        <div className="w-full h-24 bg-gradient-to-br from-green-600/30 to-teal-600/30 rounded-lg mb-3 flex items-center justify-center">
+                          <span className="text-3xl">📋</span>
+                        </div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-white truncate">{booking.event.name}</h4>
                             <p className="text-sm text-slate-400 mt-1">
-                              📅 {new Date(booking.event.startAt).toLocaleDateString()}
+                              {new Date(booking.event.startAt).toLocaleDateString()}
                             </p>
                           </div>
                           <span
-                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                            className={`flex-shrink-0 px-2 py-1 text-xs font-semibold rounded-full ${
                               booking.bookingStatus === 'PENDING'
                                 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                                 : booking.bookingStatus === 'CONFIRMED'

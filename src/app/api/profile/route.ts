@@ -27,6 +27,15 @@ export async function GET() {
         image: true,
         role: true,
         createdAt: true,
+        provider: {
+          select: {
+            id: true,
+            businessName: true,
+            address: true,
+            phone: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -51,7 +60,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email, image } = body;
+    const { name, email, image, business } = body;
 
     // Validate required fields
     if (!name || !email) {
@@ -92,6 +101,19 @@ export async function PUT(req: NextRequest) {
         role: true,
       },
     });
+
+    // Update provider/business info if provided
+    if (business) {
+      await db.provider.updateMany({
+        where: { userId: user.id },
+        data: {
+          businessName: business.businessName?.trim() || undefined,
+          address: business.address?.trim() || null,
+          phone: business.phone?.trim() || null,
+          email: business.email?.trim() || null,
+        },
+      });
+    }
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
