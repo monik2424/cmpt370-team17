@@ -135,6 +135,18 @@ export async function POST(req: Request) {
       },
     });
 
+    // If a provider was selected, create a booking record
+    if (data.providerId) {
+      await db.booking.create({
+        data: {
+          eventId: event.id,
+          providerId: data.providerId,
+          userId: user.id, // User who created the event (the customer)
+          bookingStatus: 'PENDING', // Default status, provider can confirm later
+        },
+      });
+    }
+
     return NextResponse.json({ event }, { status: 201 });
   } catch (e: any) {
     // If validation failed

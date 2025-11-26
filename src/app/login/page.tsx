@@ -34,12 +34,8 @@ export default function LoginPage() {
           setError('Invalid email or password');
         }
       } else if (result?.ok) {
-        // Redirect based on login type
-        if (formData.loginType === 'provider') {
-          router.push('/dashboard/provider');
-        } else {
-          router.push('/dashboard');
-        }
+        // Redirect to dashboard (same for all users, content adapts based on role)
+        router.push('/dashboard');
         router.refresh();
       }
     } catch (err) {

@@ -98,7 +98,7 @@ model Event {
   keywords      KeyWord[]   @relation("EventKeywords")
   categoryTags  CategoryTag[] @relation("EventCategories")
   map           Map?
-  guests        Guest[]   // Invited guests for private events
+  guests        Guest[]   @relation("EventGuests") // Invited guests for private events
 
   @@map("events")
 }
@@ -185,7 +185,7 @@ model Guest {
   name      String
   email     String
   eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     Event    @relation("EventGuests", fields: [eventId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([email, eventId]) // Prevent duplicate invites for same event
