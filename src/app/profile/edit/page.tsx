@@ -9,6 +9,13 @@ interface UserProfile {
   email: string;
   image: string | null;
   role: string;
+  provider?: {
+    id: string;
+    businessName: string;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+  };
 }
 
 export default function EditProfilePage() {
@@ -23,6 +30,12 @@ export default function EditProfilePage() {
   
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
+  });
+  const [businessData, setBusinessData] = useState({
+    businessName: '',
+    address: '',
+    phone: '',
     email: '',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -58,6 +71,14 @@ export default function EditProfilePage() {
         email: data.user.email,
       });
       setImagePreview(data.user.image);
+      if (data.user.provider) {
+        setBusinessData({
+          businessName: data.user.provider.businessName || '',
+          address: data.user.provider.address || '',
+          phone: data.user.provider.phone || '',
+          email: data.user.provider.email || '',
+        });
+      }
     } catch (err) {
       setError('Failed to load profile');
     } finally {
@@ -105,6 +126,11 @@ export default function EditProfilePage() {
           reader.readAsDataURL(imageFile);
         });
         payload.image = base64;
+      }
+
+      // Include business data for providers
+      if (profile?.role === 'PROVIDER') {
+        payload.business = businessData;
       }
 
       const response = await fetch('/api/profile', {
@@ -326,6 +352,73 @@ export default function EditProfilePage() {
               </div>
             </div>
           </div>
+
+          {/* Business Information for Providers */}
+          {profile?.role === 'PROVIDER' && (
+            <>
+              <hr className="my-6 border-gray-200 dark:border-gray-700" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                Business Information
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Business Name
+                  </label>
+                  <input
+                    type="text"
+                    id="businessName"
+                    value={businessData.businessName}
+                    onChange={(e) => setBusinessData({ ...businessData, businessName: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="businessAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Business Address
+                  </label>
+                  <input
+                    type="text"
+                    id="businessAddress"
+                    value={businessData.address}
+                    onChange={(e) => setBusinessData({ ...businessData, address: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter business address"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="businessPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Business Phone
+                  </label>
+                  <input
+                    type="tel"
+                    id="businessPhone"
+                    value={businessData.phone}
+                    onChange={(e) => setBusinessData({ ...businessData, phone: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter business phone"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="businessEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Business Email
+                  </label>
+                  <input
+                    type="email"
+                    id="businessEmail"
+                    value={businessData.email}
+                    onChange={(e) => setBusinessData({ ...businessData, email: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter business email"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="mt-6 flex justify-end">
             <button
