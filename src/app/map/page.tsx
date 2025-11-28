@@ -44,7 +44,7 @@ function inferMarkerTypeFromTags(tags: string[]): EventForMap["type"] {
   if (has(["birthday"])) return "birthday";
 
   // concert, recital, musical performance: Music
-  if (has(["concert", "recital", "musical", "performance"])) return "concert";
+  if (has(["concert", "recital", "musical", "performance" , "music"])) return "concert";
 
   // conference: Briefcase
   if (has(["conference"])) return "conference";
