@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         startAt: true,
         attendeeCount: true,
         private: true,
+        image: true,
         createdBy: {
           select: {
             id: true,

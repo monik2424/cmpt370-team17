@@ -13,6 +13,7 @@ import {
 
 // Type for events from database
 interface Event {
+  image: string | null;
   id: string;
   name: string;
   description: string | null;
@@ -273,11 +274,18 @@ export default function EventsListingPage() {
                   onClick={() => handleEventClick(event.id)}
                   className="border border-gray-700 bg-gray-800 overflow-hidden hover:bg-gray-750 hover:border-gray-600 transition-all duration-300 cursor-pointer group rounded-xl shadow-lg relative flex flex-col h-[600px]"
                 >
-                  {/* Event Image Placeholder */}
-                  <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-800 border-b border-gray-700 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-12 h-12 text-gray-600" />
+                  {/* Event Image */}
+                  <div className="h-48 border-b border-gray-700 flex-shrink-0 overflow-hidden bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                    {event.image ? (
+                      <img
+                        src={event.image}
+                        alt={event.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Calendar className="w-12 h-12 text-gray-600" />
+                    )}
                   </div>
-
                   {/* Event Content */}
                   <div className="p-6 flex-1 flex flex-col">
                     <h3 className="text-lg font-mono text-white mb-3 group-hover:text-white/90 transition">
