@@ -17,8 +17,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
+
+const categoryNames: { [key: string]: string } = {
+  sports: "Sports",
+  social: "Social",
+  music: "Music",
+  celebration: "Celebration",
+  food: "Food & Dining",
+  arts: "Arts & Culture",
+  seasonal: "Seasonal",
+  community: "Community",
+  tech: "Tech",
+  education: "Education",
+  other: "Other",
+};
 
 interface Provider {
   id: string;
@@ -36,13 +50,16 @@ interface Provider {
 export default function EventCreateForm() {
   const router = useRouter();
   // Individual form fields held in local component state
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState(""); // yyyy-mm-dd
   const [time, setTime] = useState(""); // HH:MM
   const [isPrivate, setIsPrivate] = useState(true);
-  const [tags, setTags] = useState(""); // comma separated
+  const [categoryKey, setCategoryKey] = useState("");
   const [providerId, setProviderId] = useState(""); // selected provider
 
   // Provider-related state
@@ -52,6 +69,27 @@ export default function EventCreateForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+
+  const handleImageClick = () => {
+  fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setErr("Image must be less than 2MB");
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   // Fetch providers on component mount
   useEffect(() => {
@@ -79,16 +117,29 @@ export default function EventCreateForm() {
     setErr(null);
     setOk(null);
 
+
+    let imageBase64: string | undefined;
+    if (imageFile) {
+      imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read image file"));
+        reader.readAsDataURL(imageFile);
+      });
+    }
+
     // Basic client side validation for UX
     if (!name.trim()) return setErr("Please enter a name.");
     if (!date || !time) return setErr("Please pick a date and time.");
+    if (!location.trim()) return setErr("Please enter a street address.");
+    if (!categoryKey) return setErr("Please select a category.");
 
-    // Transform comma separated tags into an array
-    const tagList = tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean)      // Prevent empty strings
-      .slice(0, 12);        // Max 12 tags
+    const finalLocation = `${location.trim()}, Saskatoon, SK`;
+
+    const categoryDisplay = categoryNames[categoryKey] ?? categoryKey;
+
+    // Previous logic kept for map feature use
+    const tagList = [categoryDisplay];
 
     setLoading(true);
     try {
@@ -97,13 +148,15 @@ export default function EventCreateForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          image: imageBase64,
           name,
           description: desc,
-          location,
+          location : finalLocation,
           date,
           time,
           isPrivate,
           tags: tagList,
+          categoryKey,
           providerId: providerId || null,
         }),
       });
@@ -133,6 +186,55 @@ export default function EventCreateForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
+        <label className="block text-sm font-medium mb-2">Event Image</label>
+
+        <div className="flex items-center gap-4">
+          {/* Preview box */}
+          <div
+            onClick={handleImageClick}
+            className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 flex items-center justify-center cursor-pointer group"
+          >
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="Event"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-xs text-gray-500 dark:text-gray-400 px-2 text-center">
+                Click to add image
+              </span>
+            )}
+
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-xs text-white">Change</span>
+            </div>
+          </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
+
+          <div>
+            <button
+              type="button"
+              onClick={handleImageClick}
+              className="px-3 py-2 text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium"
+            >
+              Upload Image
+            </button>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              JPG, PNG, or GIF. Max 2MB.
+            </p>
+          </div>
+        </div>
+      </div>      
+      <div>
         <label className="block text-sm font-medium mb-1">Event name</label>
         <input
           className="w-full rounded border px-3 py-2 dark:bg-gray-900"
@@ -156,15 +258,17 @@ export default function EventCreateForm() {
       </div>
 
       <div>
-  <label className="block text-sm font-medium mb-1">Location</label>
+  <label className="block text-sm font-medium mb-1">Street Address</label>
   <input
     className="w-full rounded border px-3 py-2 dark:bg-gray-900"
-    placeholder="102 Spadina Crescent E, Saskatoon, SK S7K 0L3"
+    placeholder="102 Spadina Crescent E"
     value={location}
     onChange={(e) => setLocation(e.target.value)}
     disabled={loading}
   />
-  <p className="text-xs text-gray-500 mt-1">Must be a Saskatoon address.</p>
+  <p className="text-xs text-gray-500 mt-1">
+    Street number and name(Eg. "105 Administration Pl").
+  </p>
 </div>
 
 
@@ -203,15 +307,23 @@ export default function EventCreateForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Tags</label>
-        <input
+        <label className="block text-sm font-medium mb-1">Category</label>
+        <select
           className="w-full rounded border px-3 py-2 dark:bg-gray-900"
-          placeholder='e.g. "birthday, kids, family"'
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
+          value={categoryKey}
+          onChange={(e) => setCategoryKey(e.target.value)}
           disabled={loading}
-        />
-        <p className="text-xs text-gray-500 mt-1">Comma-separated; max 12.</p>
+        >
+          <option value="">Select a category</option>
+          {Object.entries(categoryNames).map(([key, label]) => (
+            <option key={key} value={key}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Pick one category. It will also be used as the event&apos;s tag.
+        </p>
       </div>
 
       <div>
