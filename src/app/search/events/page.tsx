@@ -1,6 +1,18 @@
+/**
+ * Search EventsListing Page
+ * Author: Nicholas Kennedy - csy791
+ * 
+ * Routes from the 'Category Cards' on the Search page.
+ * Each Category card displays the necessary details filled 
+ * out in the Event Create form.
+ * 
+ */
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import PageLimit from "@/components/SearchComponents/pageLimit";
+import EventCard from "@/components/SearchComponents/eventCard";
+
 import { 
   Calendar,
   MapPin,
@@ -11,11 +23,12 @@ import {
   Filter,
 } from "lucide-react";
 
-// Type for events from database
+
+// Uses same variables as Events created
 interface Event {
-  image: string | null;
   id: string;
   name: string;
+  image: string | null;
   description: string | null;
   location: string | null;
   startAt: string;
@@ -34,6 +47,7 @@ interface Event {
   } | null;
 }
 
+
 const categoryNames: { [key: string]: string } = {
   sports: "Sports",
   social: "Social",
@@ -48,13 +62,20 @@ const categoryNames: { [key: string]: string } = {
   other: "Other"
 };
 
+const eventsPerPage = 15; 
+
+
 export default function EventsListingPage() {
+
+  // useState setters and variables
   const [category, setCategory] = useState<string>("sports");
   const [searchQuery, setSearchQuery] = useState("");
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
 
   // Get category from URL params
   useEffect(() => {
@@ -94,6 +115,7 @@ export default function EventsListingPage() {
   }, [category]);
 
 
+
   // Filter events by search query
   useEffect(() => {
     if (!searchQuery) {
@@ -101,7 +123,7 @@ export default function EventsListingPage() {
       return;
     }
 
-
+    // Allows typed search to parse name, location and description within the specific category. Ref. https://react.dev/learn/rendering-lists
     const filtered = events.filter(event =>
       event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,10 +133,24 @@ export default function EventsListingPage() {
     setFilteredEvents(filtered);
   }, [events, searchQuery]);
 
+
+  // Page Limit Changes
+  const pageTotal = Math.ceil(filteredEvents.length / eventsPerPage);
+  const pageStartIndex = (currentPage - 1) * eventsPerPage;
+  const pageEndIndex = pageStartIndex + eventsPerPage;
+  const currentEvents = filteredEvents.slice(pageStartIndex, pageEndIndex);
+
+  
+
+  // Pull the viewport to top of page when a new page number is selected
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({top: 0, behavior: "smooth"});
+  };
+
   const handleNavigation = (path: string) => {
     window.location.href = path;
   };
-
 
 
   const handleEventClick = (eventId: string) => {
@@ -122,33 +158,17 @@ export default function EventsListingPage() {
   };
 
 
-
-  const formatDate = (isoDate: string) => {
-    return new Date(isoDate).toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const formatTime = (isoDate: string) => {
-    return new Date(isoDate).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Navigation */}
+
+
+      {/* Navigation  ~ TODO: Maybe turn this into a component*/}
       <nav className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Saskatoon Events
+                SaskPlan
               </h1>
               <div className="hidden md:flex space-x-4">
                 <a href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
@@ -172,6 +192,7 @@ export default function EventsListingPage() {
       {/* Header Section */}
       <section className="relative px-8 py-12">
         <div className="max-w-7xl mx-auto">
+
           {/* Back Button */}
           <motion.button
             initial={{ opacity: 0, x: -20 }}
@@ -197,7 +218,7 @@ export default function EventsListingPage() {
               </span>
             </div>
             <h1 className="text-4xl font-mono text-white mb-4">
-              <span style={{ color: 'cyan', fontWeight: "bold"}}>{categoryNames[category]}</span> Events in Saskatoon
+              <span style={{ color: "rgb(245, 197, 66)", fontWeight: "bold"}}>{categoryNames[category]}</span> Events in Saskatoon
             </h1>
             <p className="text-sm font-mono text-gray-400 max-w-2xl">
               Discover upcoming {categoryNames[category]?.toLowerCase()} events happening around the city
@@ -206,9 +227,7 @@ export default function EventsListingPage() {
 
           {/* Search Bar */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 1, y: 20 }}
             className="flex flex-col md:flex-row gap-4 mb-8"
           >
             <div className="flex-1 relative">
@@ -221,10 +240,6 @@ export default function EventsListingPage() {
                 className="w-full bg-gray-800 border border-gray-700 text-white font-mono text-sm px-10 py-3 rounded-lg focus:outline-none focus:border-gray-600 transition"
               />
             </div>
-            <button className="flex items-center gap-2 px-6 py-3 bg-gray-800 border border-gray-700 text-white font-mono text-sm hover:bg-gray-700 transition cursor-pointer rounded-lg">
-              <Filter className="w-4 h-4" />
-              Filters
-            </button>
           </motion.div>
 
           {/* Results Count */}
@@ -238,6 +253,8 @@ export default function EventsListingPage() {
           </motion.p>
         </div>
       </section>
+
+
 
       {/* Events Grid */}
       <section className="relative px-8 pb-20">
@@ -264,94 +281,26 @@ export default function EventsListingPage() {
               </p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEvents.map((event, index) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.05 }}
-                  onClick={() => handleEventClick(event.id)}
-                  className="border border-gray-700 bg-gray-800 overflow-hidden hover:bg-gray-750 hover:border-gray-600 transition-all duration-300 cursor-pointer group rounded-xl shadow-lg relative flex flex-col h-[600px]"
-                >
-                  {/* Event Image */}
-                  <div className="h-48 border-b border-gray-700 flex-shrink-0 overflow-hidden bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                    {event.image ? (
-                      <img
-                        src={event.image}
-                        alt={event.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Calendar className="w-12 h-12 text-gray-600" />
-                    )}
-                  </div>
-                  {/* Event Content */}
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-lg font-mono text-white mb-3 group-hover:text-white/90 transition">
-                      {event.name}
-                    </h3>
-                    
-                    <p className="text-xs font-mono text-gray-400 mb-4 line-clamp-2">
-                      {event.description || "No description available"}
-                    </p>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentEvents.map((event, index) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    index={index}
+                    onEventClick={handleEventClick}
+                    onProviderClick={() => handleNavigation("/providers")}
+                  />
+                ))}
+              </div>
 
-                    {/* Event Details */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-xs font-mono text-gray-300">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(event.startAt)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs font-mono text-gray-300">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatTime(event.startAt)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs font-mono text-gray-300">
-                        <MapPin className="w-4 h-4" />
-                        <span>{event.location || "Location TBA"}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs font-mono text-gray-300">
-                        <Users className="w-4 h-4" />
-                        <span>{event.attendeeCount} attending</span>
-                      </div>
-                    </div>
-
-                    {/* Host Info */}
-                    <div className="pt-4 border-t border-gray-700">
-                      <p className="text-xs font-mono text-gray-400">
-                        Hosted by {event.createdBy.name}
-                      </p>
-                    </div>
-
-                    {/* Attend Button & Provider Profile button*/}
-                    {/* TODO: implement Provider Profile recommended by TA */}
-                    <div className="mt-auto pt-4 pr-2 flex justify-end">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleNavigation("/providers");
-                        }}
-                        className="px-4 py-2 pr-4 bg-red-600 hover:bg-red-700 text-white text-xs font-mono rounded-lg transition"
-                      >
-                        Provider Profile
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleNavigation("/login");
-                        }}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-mono rounded-lg transition"
-                      >
-                        Attend
-                      </button>
-                      
-                    </div>
-
-    
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+              {/* Pages Component call */}
+              <PageLimit
+                currentPage={currentPage}
+                totalPages={pageTotal}
+                onPageChange={handlePageChange}
+              />
+            </>
           )}
         </div>
       </section>

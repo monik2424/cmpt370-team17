@@ -288,7 +288,6 @@ export default function Home() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.9 }}
-                onClick={() => router.push("/search")}
                 className="border border-white/10 bg-black/40 p-6 hover:bg-white/5 hover:border-white/20 transition-all duration-300 text-left group hover:shadow-lg hover:shadow-white/5 cursor-pointer"
               >
                 <div
