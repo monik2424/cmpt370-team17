@@ -135,7 +135,7 @@ export default function CategoriesPage() {
             <div className="flex items-center space-x-8">
 
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Saskatoon Events
+                SaskPlan
               </h1>
               <div className="hidden md:flex space-x-4">
                 <a href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
@@ -178,7 +178,8 @@ export default function CategoriesPage() {
               Find Events by <span style={{ color: "rgb(245, 197, 66)", fontWeight: "bold"}}> Category</span>
             </h1>
             <p className="text-sm font-mono text-gray-400 max-w-2xl mx-auto">
-              Find the event you've been looking for. From sports tournaments & meetups, to conventions & dining, 
+              Find the event you've been looking for.
+              From sports tournaments & meetups, to conventions & dining, 
               there are always new oppurtunities around the corner!
             </p>
           </motion.div>
@@ -247,9 +248,7 @@ export default function CategoriesPage() {
       <section className="relative px-8 pb-20">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            initial={{ opacity: 1, y: 20 }}
             className="border border-gray-700 bg-gray-800 p-12 text-center rounded-xl shadow-lg"
           >
             <h2 className="text-2xl font-mono text-white-400 font-weight-bold">
@@ -261,7 +260,7 @@ export default function CategoriesPage() {
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => handleNavigation("/events/create")}
-                className="px-18 py-3 bg-cyan-500 text-black-400 text-lg font-mono rounded-lg shadow-md dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                className="px-18 py-3 bg-cyan-500 text-black-400 text-lg font-mono rounded-lg hover:bg-blue-800 transition-colors duration-300"
               >
                 Create Event
               </button>
