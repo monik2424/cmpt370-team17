@@ -294,8 +294,16 @@ export default async function DashboardPage() {
                       className="flex-shrink-0 w-64 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-colors border border-slate-600/50"
                     >
                       {/* Placeholder for future event image */}
-                      <div className="w-full h-24 bg-gradient-to-br from-blue-600/30 to-purple-600/30 rounded-lg mb-3 flex items-center justify-center">
-                        <span className="text-3xl">📅</span>
+                      <div className="w-full h-24 rounded-lg mb-3 overflow-hidden bg-gradient-to-br from-orange-600/30 to-pink-600/30 flex items-center justify-center">
+                        {ev.image ? (
+                          <img
+                            src={ev.image}
+                            alt={ev.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-3xl">🎉</span>
+                        )}
                       </div>
                       <h4 className="font-medium text-white truncate">{ev.name}</h4>
                       <p className="text-sm text-slate-400 mt-1">
@@ -337,8 +345,16 @@ export default async function DashboardPage() {
                       className="flex-shrink-0 w-64 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-colors border border-slate-600/50"
                     >
                       {/* Placeholder for future event image */}
-                      <div className="w-full h-24 bg-gradient-to-br from-orange-600/30 to-pink-600/30 rounded-lg mb-3 flex items-center justify-center">
-                        <span className="text-3xl">🎉</span>
+                      <div className="w-full h-24 rounded-lg mb-3 overflow-hidden bg-gradient-to-br from-blue-600/30 to-purple-600/30 flex items-center justify-center">
+                        {ev.image ? (
+                          <img
+                            src={ev.image}
+                            alt={ev.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-3xl">📅</span>
+                        )}
                       </div>
                       <h4 className="font-medium text-white truncate">{ev.name}</h4>
                       <p className="text-sm text-slate-400 mt-1">

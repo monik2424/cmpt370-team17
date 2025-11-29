@@ -97,6 +97,7 @@ export async function PUT(
   const time = (body?.time ?? "").trim();      // "HH:MM"
   const location = (body?.location ?? "").trim();
   const isPrivate = Boolean(body?.isPrivate);
+  const tags = Array.isArray(body.tags) ? body.tags as string[] : [];
 
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -115,15 +116,41 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid startAt" }, { status: 400 });
   }
 
+  const updateData: any = {
+    name,
+    description: desc || null,
+    startAt,
+    private: isPrivate,
+    location,
+  };
+ if (typeof body.image === "string") {
+    updateData.image = body.image;      // replace with new image
+  } else if (body.image === null) {
+    updateData.image = null;            // allow clearing image
+  }
+  // If body.image is undefined -> leave image unchanged.
+
+  // 🔹 Update categoryTags if tags were sent
+  if (tags.length > 0) {
+    const tagRecords = await Promise.all(
+      tags.map((label: string) =>
+        db.categoryTag.upsert({
+          where: { nameTag: label },
+          update: {},
+          create: { nameTag: label },
+        })
+      )
+    );
+
+    updateData.categoryTags = {
+      set: tagRecords.map((t) => ({ id: t.id })), // replace existing categories
+    };
+  }
+
   const updated = await db.event.update({
     where: { id },
-    data: {
-      name,
-      description: desc || null,
-      startAt,
-      private: isPrivate,
-      location,
-    },
+    data: updateData,
+    include: { categoryTags: true },
   });
 
   return NextResponse.json({ event: updated }, { status: 200 });
