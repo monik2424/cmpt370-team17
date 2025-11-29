@@ -202,9 +202,11 @@ export default function CategoriesPage() {
 
                 <motion.div
                   key={category.id}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.05 }} 
                   onClick={() => handleNavigation(`/search/events?category=${category.id}`)}
-                  className="relative border border-gray-700 bg-gray-800 p-6 rounded-xl hover:border-gray-600 transition-all duration-300 cursor-pointer group"
+                  className="relative border border-gray-700 bg-gray-800 p-6 rounded-xl hover:border-gray-600 transition-all duration-300 hover:bg-gray-750 shadow-lg cursor-pointer group"
                 >
 
                   {/* Gradient overlay */}
