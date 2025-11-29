@@ -168,7 +168,7 @@ export default function EventsListingPage() {
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Saskatoon Events
+                SaskPlan
               </h1>
               <div className="hidden md:flex space-x-4">
                 <a href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">
@@ -192,7 +192,7 @@ export default function EventsListingPage() {
       {/* Header Section */}
       <section className="relative px-8 py-12">
         <div className="max-w-7xl mx-auto">
-          
+
           {/* Back Button */}
           <motion.button
             initial={{ opacity: 0, x: -20 }}
@@ -218,7 +218,7 @@ export default function EventsListingPage() {
               </span>
             </div>
             <h1 className="text-4xl font-mono text-white mb-4">
-              <span style={{ color: 'cyan', fontWeight: "bold"}}>{categoryNames[category]}</span> Events in Saskatoon
+              <span style={{ color: "rgb(245, 197, 66)", fontWeight: "bold"}}>{categoryNames[category]}</span> Events in Saskatoon
             </h1>
             <p className="text-sm font-mono text-gray-400 max-w-2xl">
               Discover upcoming {categoryNames[category]?.toLowerCase()} events happening around the city

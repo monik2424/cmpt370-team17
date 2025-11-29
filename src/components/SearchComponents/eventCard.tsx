@@ -32,6 +32,7 @@ interface EventCardProps {
   onProviderClick: () => void;
 }
 
+
 export default function EventCard({ 
   event, 
   index, 
@@ -39,6 +40,8 @@ export default function EventCard({
   onProviderClick 
 }: EventCardProps) {
   
+
+
   const formatDate = (isoDate: string) => {
     return new Date(isoDate).toLocaleDateString('en-US', { 
       weekday: 'short', 
@@ -48,6 +51,8 @@ export default function EventCard({
     });
   };
 
+
+
   const formatTime = (isoDate: string) => {
     return new Date(isoDate).toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -56,13 +61,12 @@ export default function EventCard({
     });
   };
 
+
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.05 }}
-      onClick={() => onEventClick(event.id)}
-      className="border border-gray-700 bg-gray-800 overflow-hidden hover:bg-gray-750 hover:border-gray-600 transition-all duration-300 cursor-pointer group rounded-xl shadow-lg relative flex flex-col h-[600px]"
+      initial={{ opacity: 1, y: 30 }}
+      className="border border-gray-700 bg-gray-800 overflow-hidden hover:bg-gray-750 hover:border-gray-600 transition-all duration-300 group rounded-xl shadow-lg relative flex flex-col h-[600px]"
     >
 
 
@@ -127,7 +131,7 @@ export default function EventCard({
               e.stopPropagation();
               onProviderClick();
             }}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-mono rounded-lg transition"
+            className="px-4 py-2 bg-red-400 hover:bg-red-600 text-white text-xs font-mono rounded-lg transition"
           >
             Provider Profile
           </button>
