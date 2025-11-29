@@ -25,6 +25,7 @@ import db from "@/modules/db";
 
 // Describing the expected shape
 const CreateEventSchema = z.object({
+  image: z.string().optional().nullable(),       // Optional image in base64 format
   name: z.string().min(1).max(120),
   description: z.string().max(1000).optional().nullable(),
   location: z.string().min(5).max(200),
@@ -117,6 +118,7 @@ export async function POST(req: Request) {
     // Create Event row in the database
     const event = await db.event.create({
       data: {
+        image: data.image ?? null,
         name: data.name,
         description: data.description ?? null,
         location: data.location,
@@ -134,6 +136,18 @@ export async function POST(req: Request) {
         provider: true,       // Return provider info if linked
       },
     });
+
+    // If a provider was selected, create a booking record
+    if (data.providerId) {
+      await db.booking.create({
+        data: {
+          eventId: event.id,
+          providerId: data.providerId,
+          userId: user.id, // User who created the event (the customer)
+          bookingStatus: 'PENDING', // Default status, provider can confirm later
+        },
+      });
+    }
 
     return NextResponse.json({ event }, { status: 201 });
   } catch (e: any) {
@@ -159,15 +173,43 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   const startsAt = new Date(`${body.date}T${body.time}:00`);
 
+  const updateData: any = {
+    name: body.name,
+    description: body.desc ?? null,
+    startAt: startsAt,
+    private: body.isPrivate,
+    location: body.location,
+  };
+
+    // Only update image if provided
+  if (typeof body.image === "string") {
+    updateData.image = body.image;   // replace with new image
+  } else if (body.image === null) {
+    // 
+    updateData.image = null;
+  }
+  // If body.image is undefined leave image unchanged
+
+  if (Array.isArray(body.tags) && body.tags.length > 0) {
+    const tagRecords = await Promise.all(
+      body.tags.map((label: string) =>
+        db.categoryTag.upsert({
+          where: { nameTag: label },
+          update: {},
+          create: { nameTag: label },
+        })
+      )
+    );
+
+    // Replace existing categories with the new ones
+    updateData.categoryTags = {
+      set: tagRecords.map((t) => ({ id: t.id })),
+    };
+  }
+
   const event = await db.event.update({
     where: { id: params.id },
-    data: {
-      name: body.name,
-      description: body.desc ?? null,
-      startAt: startsAt,
-      private: body.isPrivate,
-      location: body.location,
-    },
+    data: updateData,
   });
 
   return NextResponse.json({ event }, { status: 200 });

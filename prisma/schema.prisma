@@ -84,6 +84,7 @@ model Event {
   updatedAt     DateTime    @updatedAt
   attendeeCount Int         @default(0)
   private       Boolean     @default(false)
+  image         String?
 
   // Relationships
   createdById   String      // User who created the event (any user can create)
@@ -98,7 +99,7 @@ model Event {
   keywords      KeyWord[]   @relation("EventKeywords")
   categoryTags  CategoryTag[] @relation("EventCategories")
   map           Map?
-  guests        Guest[]   // Invited guests for private events
+  guests        Guest[]   @relation("EventGuests") // Invited guests for private events
 
   @@map("events")
 }
@@ -185,7 +186,7 @@ model Guest {
   name      String
   email     String
   eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     Event    @relation("EventGuests", fields: [eventId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([email, eventId]) // Prevent duplicate invites for same event
