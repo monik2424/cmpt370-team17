@@ -27,11 +27,20 @@ export async function GET(req: NextRequest) {
 
     // Filter by category if provided
     if (category) {
+      // TODO: I made this short-term fix but I think our Database has different tags for the
+      // multi-line names so it resulted in events not showing up with food/art tags
+      const categoryMap: { [key: string]: string[] } = {
+        arts: ["arts", "Arts & Culture"],
+        food: ["food", "Food & Dining"],
+      };
+
+      const possibleTags = categoryMap[category] || [category];
+
       whereClause.categoryTags = {
         some: {
           nameTag: {
-            equals: category,
-            mode: 'insensitive', // Case-insensitive matching
+            in: possibleTags,
+              mode: 'insensitive',
           },
         },
       };
