@@ -71,7 +71,7 @@ export default function Home() {
               height={32}
               className="w-8 h-8"
             />
-            <span className="ml-1 text-sm text-white font-mono">Saskatoon Events</span>
+            <span className="ml-1 text-sm text-white font-mono">SaskPlan</span>
           </div>
           <div className="hidden font-mono bg-white/5 md:flex gap-6 px-4 py-2 text-xs absolute left-1/2 text-white -translate-x-1/2">
             <Link href="/" className="px-3 py-2 hover:bg-white/10 transition">
@@ -80,9 +80,9 @@ export default function Home() {
             <Link href="/events" className="px-3 py-2 hover:bg-white/10 transition">
               Events
             </Link>
-            <Link href="/venues" className="px-3 py-2 hover:bg-white/10 transition">
+            {/*<Link href="/venues" className="px-3 py-2 hover:bg-white/10 transition">
               Venues
-            </Link>
+            </Link>*/}
             <Link href="/providers" className="px-3 py-2 hover:bg-white/10 transition">
               Providers ↗
             </Link>
@@ -144,7 +144,7 @@ export default function Home() {
               as="h1"
               className="text-5xl font-mono text-center text-white mb-6 max-w-2xl mx-auto"
             >
-              {`Saskatoon Event Planning Platform`}
+              {`SaskPlan`}
             </TextAnimate>
             <TextAnimate
               animation="fadeIn"
