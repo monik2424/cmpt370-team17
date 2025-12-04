@@ -1,13 +1,16 @@
 /**
- * GET /api/events/public
- * ----------------------------------------------------------------------------
- * Fetches public events, optionally filtered by category tag
- * Query params: ?category=sports (optional)
+* Public Event API fetch
+ * Author: Nicholas Kennedy - csy791
  * 
- * This endpoint is accessible without authentication and only returns:
+ * Fetches public events, filtered by category dropdown
+ * 
+ *   RETURNS:
  * - Public events (private: false)
  * - Future events (startAt >= now)
- * - Filtered by category if provided
+ * - Filtered by category 
+ * 
+ *  Ignores private and past events because I didn't see logic in current
+ *  search page. Maybe if I add a past event page.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -27,11 +30,20 @@ export async function GET(req: NextRequest) {
 
     // Filter by category if provided
     if (category) {
+      // TODO: I made this short-term fix but I think our Database has different tags for the
+      // multi-line names so it resulted in events not showing up with food/art tags
+      const categoryMap: { [key: string]: string[] } = {
+        arts: ["arts", "Arts & Culture"],
+        food: ["food", "Food & Dining"],
+      };
+
+      const possibleTags = categoryMap[category] || [category];
+
       whereClause.categoryTags = {
         some: {
           nameTag: {
-            equals: category,
-            mode: 'insensitive', // Case-insensitive matching
+            in: possibleTags,
+              mode: 'insensitive',
           },
         },
       };

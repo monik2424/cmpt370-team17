@@ -3,9 +3,15 @@
  * Author: Nicholas Kennedy - csy791
  * 
  * Routes from the 'Category Cards' on the Search page.
- * Each Category card displays the necessary details filled 
- * out in the Event Create form.
+ * Each Event card displays the necessary details filled 
+ * out in the Event Create form. This includes:
+ *  - Event Name
+ *  - Location
+ *  - Date/time
+ *  - Host Name
  * 
+ * By default the events are sorted by 'upcoming' I want to add a 
+ * 'popularity' feature for trending events
  */
 "use client";
 import React, { useState, useEffect } from "react";
@@ -42,12 +48,13 @@ interface Event {
     id: string;
     nameTag: string;
   }>;
-  provider?: {
+  provider?: { // only if current event has a provider attached
     businessName: string;
   } | null;
 }
 
 
+// Mapped key to string: This matches the EventCreateForm table in our Prisma schema
 const categoryNames: { [key: string]: string } = {
   sports: "Sports",
   social: "Social",
@@ -65,6 +72,15 @@ const categoryNames: { [key: string]: string } = {
 const eventsPerPage = 15; 
 
 
+/**
+ * The EventListing Page: Populates a grid with my eventCard objects, and includes
+ * a search bar for targeted user input
+ * 
+ * The searchbar currently queries:
+ *  - Event Name
+ *  - Location
+ *  - Host Name
+ */
 export default function EventsListingPage() {
 
   // useState setters and variables
@@ -87,14 +103,14 @@ export default function EventsListingPage() {
   }, []);
 
 
-  // Fetch events from API when category changes
+  // Fetch events from public event API when category changes
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`/api/events/public?category=${category}`);
+        const response = await fetch(`/api/events/public?category=${category}`); // api fetch
         
         if (!response.ok) {
           throw new Error("Failed to fetch events");
@@ -134,7 +150,7 @@ export default function EventsListingPage() {
   }, [events, searchQuery]);
 
 
-  // Page Limit Changes
+  // Page Limit Changes TODO: Was suggested during presentation to make pagination function through backend rather than front
   const pageTotal = Math.ceil(filteredEvents.length / eventsPerPage);
   const pageStartIndex = (currentPage - 1) * eventsPerPage;
   const pageEndIndex = pageStartIndex + eventsPerPage;
@@ -147,6 +163,7 @@ export default function EventsListingPage() {
     setCurrentPage(page);
     window.scrollTo({top: 0, behavior: "smooth"});
   };
+
 
   const handleNavigation = (path: string) => {
     window.location.href = path;
@@ -162,7 +179,7 @@ export default function EventsListingPage() {
     <div className="min-h-screen bg-gray-900">
 
 
-      {/* Navigation  ~ TODO: Maybe turn this into a component*/}
+      {/* Navigation Bar  ~ TODO: Maybe turn this into a component*/}
       <nav className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -188,6 +205,7 @@ export default function EventsListingPage() {
           </div>
         </div>
       </nav>
+
 
       {/* Header Section */}
       <section className="relative px-8 py-12">

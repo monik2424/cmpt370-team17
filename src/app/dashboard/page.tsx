@@ -136,7 +136,7 @@ export default async function DashboardPage() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                Saskatoon Event Planning
+                SaskPlan
               </h1>
             </div>
             <div className="flex items-center space-x-4">
