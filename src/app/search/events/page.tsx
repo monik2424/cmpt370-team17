@@ -139,11 +139,13 @@ export default function EventsListingPage() {
       return;
     }
 
-    // Allows typed search to parse name, location and description within the specific category. Ref. https://react.dev/learn/rendering-lists
+    // Allows typed search to parse name, location, host name, and description within the specific category. Ref. https://react.dev/learn/rendering-lists
     const filtered = events.filter(event =>
       event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location?.toLowerCase().includes(searchQuery.toLowerCase())
+      event.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.createdBy.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.startAt?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
     setFilteredEvents(filtered);
