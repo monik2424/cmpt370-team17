@@ -90,7 +90,10 @@ export default async function GuestManagementPage({ params }: PageProps) {
         {/* Guest Management Component */}
         <GuestManagementClient 
           eventId={event.id}
-          initialGuests={event.guests}
+          initialGuests={event.guests.map(guest => ({
+            ...guest,
+            createdAt: guest.createdAt.toISOString()
+          }))}
         />
       </div>
     </div>
