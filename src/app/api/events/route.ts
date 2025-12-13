@@ -25,7 +25,7 @@ import db from "@/modules/db";
 
 // Describing the expected shape
 const CreateEventSchema = z.object({
-  image: z.string().optional().nullable(),       // Optional image in base64 format
+  image: z.string().optional().nullable(),
   name: z.string().min(1).max(120),
   description: z.string().max(1000).optional().nullable(),
   location: z.string().min(5).max(200),
@@ -118,7 +118,6 @@ export async function POST(req: Request) {
     // Create Event row in the database
     const event = await db.event.create({
       data: {
-        image: data.image ?? null,
         name: data.name,
         description: data.description ?? null,
         location: data.location,

@@ -63,7 +63,7 @@ export const authConfig: NextAuthConfig = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image,
+          image: null, // Don't store image in JWT - fetch from DB instead
           role: user.role,
           loginType: loginType,
           isProvider: !!user.provider
