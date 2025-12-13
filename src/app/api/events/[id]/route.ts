@@ -14,6 +14,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import db from "@/modules/db";
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 /**
  * DELETE /api/events/[id]
  * Deletes a single Event the current user owns.
@@ -25,7 +32,7 @@ export async function DELETE(
   const { id } = await params;
   // must be signed in
   const session = await auth();
-  const user = session?.user as any;
+  const user = session?.user as SessionUser | undefined;
   if (!user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -67,7 +74,7 @@ export async function PUT(
   const { id } = await params;
 
   const session = await auth();
-  const user = session?.user as any;
+  const user = session?.user as SessionUser | undefined;
   if (!user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -116,7 +123,15 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid startAt" }, { status: 400 });
   }
 
-  const updateData: any = {
+  const updateData: {
+    name: string;
+    description: string | null;
+    startAt: Date;
+    private: boolean;
+    location: string;
+    image?: string | null;
+    categoryTags?: { set: { id: string }[] };
+  } = {
     name,
     description: desc || null,
     startAt,

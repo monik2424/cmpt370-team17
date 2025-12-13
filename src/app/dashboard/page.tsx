@@ -13,6 +13,31 @@ import { redirect } from 'next/navigation';
 import { auth, signOut } from '@/lib/auth';
 import db from "@/modules/db";
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
+interface BookingWithEvent {
+  id: string;
+  bookingStatus: string;
+  createdAt: Date;
+  event: {
+    id: string;
+    name: string;
+    startAt: Date;
+    location?: string | null;
+  };
+  provider?: {
+    id: string;
+    businessName: string;
+    phone: string | null;
+    email: string | null;
+  } | null;
+}
+
 export default async function DashboardPage() {
   const session = await auth();
 
@@ -20,7 +45,7 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const sessionUser = session.user as any;
+  const sessionUser = session.user as SessionUser;
 
   // Fetch fresh user data from database (includes updated image)
   const dbUser = await db.user.findUnique({
@@ -32,7 +57,7 @@ export default async function DashboardPage() {
 
   // Fetch provider data if user is a provider
   let provider = null;
-  let providerBookings: any[] = [];
+  let providerBookings: BookingWithEvent[] = [];
   
   if (user.role === 'PROVIDER') {
     provider = await db.provider.findUnique({
@@ -62,7 +87,7 @@ export default async function DashboardPage() {
   }
 
   // Fetch user's bookings (if not a provider)
-  let userBookings: any[] = [];
+  let userBookings: BookingWithEvent[] = [];
   if (user.role !== 'PROVIDER') {
     userBookings = await db.booking.findMany({
       where: { userId: user.id },
@@ -124,8 +149,8 @@ export default async function DashboardPage() {
     eventsAttending: attendingEvents.length,
     totalBookings: user.role === 'PROVIDER' ? providerBookings.length : userBookings.length,
     confirmedBookings: user.role === 'PROVIDER' 
-      ? providerBookings.filter((b: any) => b.bookingStatus === 'CONFIRMED').length
-      : userBookings.filter((b: any) => b.bookingStatus === 'CONFIRMED').length,
+      ? providerBookings.filter((b) => b.bookingStatus === 'CONFIRMED').length
+      : userBookings.filter((b) => b.bookingStatus === 'CONFIRMED').length,
   };
 
   return (
@@ -280,7 +305,7 @@ export default async function DashboardPage() {
               </div>
               {createdEvents.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-slate-400 mb-4">You haven't created any events yet.</p>
+                  <p className="text-slate-400 mb-4">You haven&apos;t created any events yet.</p>
                   <a href="/events/create" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
                     Create your first event
                   </a>
@@ -326,12 +351,12 @@ export default async function DashboardPage() {
             <div className="bg-slate-800/50 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6 lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <span className="text-xl">🎉</span> Events You're Attending
+                  <span className="text-xl">🎉</span> Events You&apos;re Attending
                 </h3>
               </div>
               {attendingEvents.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-slate-400 mb-4">You're not attending any events yet.</p>
+                  <p className="text-slate-400 mb-4">You&apos;re not attending any events yet.</p>
                   <a href="/search" className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors">
                     Find events to attend
                   </a>
@@ -425,11 +450,11 @@ export default async function DashboardPage() {
                 
                 {providerBookings.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-slate-400">No bookings yet. When hosts book your services, they'll appear here.</p>
+                    <p className="text-slate-400">No bookings yet. When hosts book your services, they&apos;ll appear here.</p>
                   </div>
                 ) : (
                   <div className="flex gap-4 overflow-x-auto pb-2">
-                    {providerBookings.map((booking: any) => (
+                    {providerBookings.map((booking) => (
                       <div
                         key={booking.id}
                         className="flex-shrink-0 w-64 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-colors border border-slate-600/50"
@@ -481,14 +506,14 @@ export default async function DashboardPage() {
               
               {userBookings.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-slate-400 mb-4">You haven't booked any providers yet.</p>
+                  <p className="text-slate-400 mb-4">You haven&apos;t booked any providers yet.</p>
                   <a href="/providers" className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors">
                     Browse providers
                   </a>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {userBookings.map((booking: any) => (
+                  {userBookings.map((booking) => (
                     <div
                       key={booking.id}
                       className="p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-colors border border-slate-600/50"

@@ -178,7 +178,7 @@ export default function CategoriesPage() {
               Find Events by <span style={{ color: "rgb(245, 197, 66)", fontWeight: "bold"}}> Category</span>
             </h1>
             <p className="text-sm font-mono text-gray-400 max-w-2xl mx-auto">
-              Find the event you've been looking for.
+              Find the event you&apos;ve been looking for.
               From sports tournaments & meetups, to conventions & dining, 
               there are always new oppurtunities around the corner!
             </p>
@@ -254,10 +254,10 @@ export default function CategoriesPage() {
             className="border border-gray-700 bg-gray-800 p-12 text-center rounded-xl shadow-lg"
           >
             <h2 className="text-2xl font-mono text-white-400 font-weight-bold">
-              Can't find what you're looking for?
+              Can&apos;t find what you&apos;re looking for?
             </h2>
             <p className="text-sm font-mono text-gray-400 mb-6 max-w-xl mx-auto">
-              Create the event you've always wanted to attend!
+              Create the event you&apos;ve always wanted to attend!
             </p>
             <div className="flex gap-4 justify-center">
               <button

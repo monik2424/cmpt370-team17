@@ -16,10 +16,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import EventCreateForm from "@/components/EventComponents/EventCreateForm";
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 export default async function CreateEventPage() {
   // Retrieve the current authenticated session
   const session = await auth();
-  const user = session?.user as any;
+  const user = session?.user as SessionUser | undefined;
 
   // Role-based access: only HOST users can create events
   if (!user) redirect("/login");

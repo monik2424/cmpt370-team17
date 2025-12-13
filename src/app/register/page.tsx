@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -173,9 +174,9 @@ export default function RegisterPage() {
               </a>
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              <a href="/" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+              <Link href="/" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
                 ← Back to Home
-              </a>
+              </Link>
             </p>
           </div>
         </form>

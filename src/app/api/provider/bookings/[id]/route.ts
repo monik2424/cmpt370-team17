@@ -14,6 +14,13 @@ import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 import { z } from 'zod';
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 const updateBookingSchema = z.object({
   bookingStatus: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']),
 });
@@ -25,7 +32,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(
@@ -134,11 +141,11 @@ export async function PUT(
       message: `Booking ${data.bookingStatus.toLowerCase()} successfully`,
       booking: updatedBooking,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update booking error:', error);
     
     // Handle Zod validation errors
-    if (error?.issues) {
+    if (error && typeof error === 'object' && 'issues' in error) {
       return NextResponse.json(
         { error: 'Validation error', issues: error.issues },
         { status: 400 }

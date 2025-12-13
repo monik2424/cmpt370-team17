@@ -41,8 +41,9 @@ export default function DeleteEventButton({ id }: { id: string }) {
       }
       // Reload page so that the deleted event disappears from the UI
       window.location.reload();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error('Failed to delete event');
+      setError(error.message);
     } finally {
       // Re-enable button and stop spinner
       setLoading(false);

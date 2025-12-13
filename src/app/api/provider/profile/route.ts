@@ -14,6 +14,13 @@ import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 import { z } from 'zod';
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 const updateProviderSchema = z.object({
   businessName: z.string().min(1).max(200).optional(),
   address: z.string().max(500).optional().nullable(),
@@ -21,10 +28,10 @@ const updateProviderSchema = z.object({
   email: z.string().email().optional().nullable(),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(
@@ -102,7 +109,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(
@@ -149,11 +156,11 @@ export async function PUT(req: NextRequest) {
       message: 'Provider profile updated successfully',
       provider: updatedProvider,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update provider profile error:', error);
     
     // Handle Zod validation errors
-    if (error?.issues) {
+    if (error && typeof error === 'object' && 'issues' in error) {
       return NextResponse.json(
         { error: 'Validation error', issues: error.issues },
         { status: 400 }

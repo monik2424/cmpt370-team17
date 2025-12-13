@@ -10,14 +10,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(

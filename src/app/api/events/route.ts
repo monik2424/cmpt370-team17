@@ -36,10 +36,17 @@ const CreateEventSchema = z.object({
   providerId: z.string().optional().nullable(), // Optional provider selection
 });
 
-export async function GET(req: Request) {
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
+export async function GET() {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -73,7 +80,7 @@ export async function POST(req: Request) {
   try {
     // Authenticate session and user
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -149,9 +156,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ event }, { status: 201 });
-  } catch (e: any) {
+  } catch (e: unknown) {
     // If validation failed
-    if (e?.issues) {
+    if (e && typeof e === 'object' && 'issues' in e) {
       return NextResponse.json({ error: "Invalid input", details: e.issues }, { status: 400 });
     }
     console.error(e);

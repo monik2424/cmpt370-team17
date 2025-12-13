@@ -9,10 +9,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 export async function GET() {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -53,7 +60,7 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -78,7 +85,11 @@ export async function PUT(req: NextRequest) {
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: {
+      name: string;
+      email: string;
+      image?: string | null;
+    } = {
       name: name.trim(),
       email: email.trim().toLowerCase(),
     };

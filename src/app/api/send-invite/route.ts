@@ -8,11 +8,18 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-// @ts-ignore - nodemailer types not available
+// @ts-expect-error - nodemailer types not available
 import nodemailer from "nodemailer";
 import { createEvent } from "ics";
 import { auth } from "@/lib/auth";
 import db from "@/modules/db";
+
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
 
 interface InviteRequest {
   guestId: string;
@@ -22,7 +29,7 @@ interface InviteRequest {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(
@@ -194,11 +201,11 @@ A calendar invitation is attached to this email.
       message: "Calendar invitation sent successfully" 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Send invite error:", error);
     
     // Handle specific email errors with detailed messages
-    if (error.code === 'EAUTH') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'EAUTH') {
       return NextResponse.json(
         { 
           error: "Email authentication failed", 
@@ -211,7 +218,7 @@ A calendar invitation is attached to this email.
         },
         { status: 500 }
       );
-    } else if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
+    } else if (error && typeof error === 'object' && 'code' in error && (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT')) {
       return NextResponse.json(
         { 
           error: "Connection failed", 
@@ -224,7 +231,7 @@ A calendar invitation is attached to this email.
         },
         { status: 500 }
       );
-    } else if (error.code === 'EENVELOPE') {
+    } else if (error && typeof error === 'object' && 'code' in error && error.code === 'EENVELOPE') {
       return NextResponse.json(
         { 
           error: "Invalid email configuration", 
@@ -254,7 +261,7 @@ A calendar invitation is attached to this email.
     return NextResponse.json(
       { 
         error: "Failed to send calendar invitation", 
-        details: error.message || "Unknown error occurred",
+        details: (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') ? error.message : "Unknown error occurred",
         troubleshooting: [
           "Check server logs for more details",
           "Try the email configuration test at /test-email",

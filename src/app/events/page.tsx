@@ -15,11 +15,18 @@ import DeleteEventButton from "@/components/EventComponents/DeleteEventButton";
 import JoinButton from "@/components/EventComponents/JoinButton";
 import LeaveButton from "@/components/EventComponents/LeaveButton";
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 export default async function EventsPage() {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
-  const user = session.user as any;
+  const user = session.user as SessionUser;
 
   // Anyone except PROVIDER can create/manage their own events
   const canManage = user.role !== 'PROVIDER';

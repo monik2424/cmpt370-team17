@@ -14,6 +14,13 @@ import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 import { z } from 'zod';
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 const createBookingSchema = z.object({
   eventId: z.string().min(1),
   providerId: z.string().min(1),
@@ -22,7 +29,7 @@ const createBookingSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(
@@ -106,11 +113,11 @@ export async function POST(req: NextRequest) {
       message: 'Booking created successfully',
       booking,
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create booking error:', error);
     
     // Handle Zod validation errors
-    if (error?.issues) {
+    if (error && typeof error === 'object' && 'issues' in error) {
       return NextResponse.json(
         { error: 'Validation error', issues: error.issues },
         { status: 400 }
@@ -124,10 +131,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(

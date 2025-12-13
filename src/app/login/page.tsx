@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -38,13 +39,19 @@ export default function LoginPage() {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // NextAuth v5 throws CredentialsSignin error for invalid credentials
-      if (err?.message?.includes('CredentialsSignin') || err?.name === 'CredentialsSignin') {
-        if (formData.loginType === 'provider') {
-          setError('Invalid credentials or you do not have a provider account');
+      if (err && typeof err === 'object' && ('message' in err || 'name' in err)) {
+        const error = err as { message?: string; name?: string };
+        if (error.message?.includes('CredentialsSignin') || error.name === 'CredentialsSignin') {
+          if (formData.loginType === 'provider') {
+            setError('Invalid credentials or you do not have a provider account');
+          } else {
+            setError('Invalid email or password');
+          }
         } else {
-          setError('Invalid email or password');
+          console.error('Login error:', err);
+          setError('An error occurred. Please try again.');
         }
       } else {
         console.error('Login error:', err);
@@ -163,15 +170,15 @@ export default function LoginPage() {
               </a>
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <a href="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
                 Create one here
               </a>
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              <a href="/" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+              <Link href="/" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
                 ← Back to Home
-              </a>
+              </Link>
             </p>
           </div>
         </form>

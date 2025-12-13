@@ -113,7 +113,17 @@ export default function EditProfilePage() {
     setSuccess('');
 
     try {
-      const payload: any = {
+      const payload: {
+        name: string;
+        email: string;
+        image?: string;
+        business?: {
+          businessName?: string;
+          address?: string | null;
+          phone?: string | null;
+          email?: string | null;
+        };
+      } = {
         name: formData.name,
         email: formData.email,
       };
@@ -149,8 +159,9 @@ export default function EditProfilePage() {
       
       // Refresh profile data
       await fetchProfile();
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Failed to update profile');
+      setError(error.message);
     } finally {
       setSaving(false);
     }
@@ -194,8 +205,9 @@ export default function EditProfilePage() {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (err: any) {
-      setPasswordError(err.message || 'Failed to change password');
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Failed to change password');
+      setPasswordError(error.message);
     } finally {
       setChangingPassword(false);
     }

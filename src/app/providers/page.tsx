@@ -133,8 +133,9 @@ export default function ProvidersPage() {
         setSuccess('');
         fetchProviders(); // Refresh to update booking counts
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to create booking. Please try again.');
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Failed to create booking. Please try again.');
+      setError(error.message);
     } finally {
       setBookingLoading(false);
     }

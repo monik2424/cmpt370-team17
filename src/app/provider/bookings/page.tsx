@@ -102,8 +102,9 @@ export default function ProviderBookingsPage() {
 
       // Refresh bookings list
       await fetchBookings();
-    } catch (err: any) {
-      alert(err.message || 'Failed to update booking. Please try again.');
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Failed to update booking. Please try again.');
+      alert(error.message);
       console.error('Update booking error:', err);
     } finally {
       setUpdating(null);

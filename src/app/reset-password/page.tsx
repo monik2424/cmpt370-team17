@@ -205,7 +205,7 @@ export default function ResetPasswordWithOTP() {
 
           <div className="text-center space-y-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Didn't receive the code?{' '}
+              Didn&apos;t receive the code?{' '}
               <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
                 Resend OTP
               </Link>

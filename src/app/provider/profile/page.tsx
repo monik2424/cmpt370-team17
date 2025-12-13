@@ -112,8 +112,9 @@ export default function ProviderProfilePage() {
       setSuccess('Profile updated successfully!');
       setEditing(false);
       await fetchProfile(); // Refresh profile data
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile. Please try again.');
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Failed to update profile. Please try again.');
+      setError(error.message);
     } finally {
       setSaving(false);
     }

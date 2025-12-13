@@ -24,7 +24,14 @@ export default async function GuestManagementPage({ params }: PageProps) {
     redirect('/login');
   }
 
-  const user = session.user as any;
+  interface SessionUser {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+    role?: string | null;
+  }
+
+  const user = session.user as SessionUser;
 
   // Fetch event and verify permissions
   const event = await db.event.findUnique({

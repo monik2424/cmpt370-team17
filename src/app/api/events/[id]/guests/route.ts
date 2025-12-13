@@ -13,19 +13,26 @@ import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 import { z } from 'zod';
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 const addGuestSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
 });
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(
@@ -91,7 +98,7 @@ export async function POST(
   const { id } = await params;
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json(
@@ -147,11 +154,11 @@ export async function POST(
       message: 'Guest added successfully',
       guest,
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Add guest error:', error);
     
     // Handle unique constraint violation (duplicate email for same event)
-    if (error?.code === 'P2002') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
       return NextResponse.json(
         { error: 'This email is already invited to this event' },
         { status: 400 }
@@ -159,7 +166,7 @@ export async function POST(
     }
 
     // Handle Zod validation errors
-    if (error?.issues) {
+    if (error && typeof error === 'object' && 'issues' in error) {
       return NextResponse.json(
         { error: 'Validation error', issues: error.issues },
         { status: 400 }

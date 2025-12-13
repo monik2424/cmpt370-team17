@@ -9,10 +9,17 @@ import { auth } from '@/lib/auth';
 import db from '@/modules/db';
 import bcrypt from 'bcryptjs';
 
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
 export async function PUT(req: NextRequest) {
   try {
     const session = await auth();
-    const user = session?.user as any;
+    const user = session?.user as SessionUser | undefined;
 
     if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
