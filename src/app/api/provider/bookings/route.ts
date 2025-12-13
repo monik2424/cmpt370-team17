@@ -12,7 +12,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import db from '@/modules/db';
-import { Prisma } from '@prisma/client';
 
 interface SessionUser {
   id: string;
@@ -57,7 +56,10 @@ export async function GET(req: NextRequest) {
     const statusFilter = searchParams.get('status');
 
     // Build where clause
-    const whereClause: Prisma.BookingWhereInput = {
+    const whereClause: {
+      providerId: string;
+      bookingStatus?: string;
+    } = {
       providerId: provider.id,
     };
 

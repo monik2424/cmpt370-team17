@@ -15,14 +15,24 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/modules/db";
-import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
 
-    const whereClause: Prisma.EventWhereInput = {
+    const whereClause: {
+      private: boolean;
+      startAt: { gte: Date };
+      categoryTags?: {
+        some: {
+          nameTag: {
+            in: string[];
+            mode: 'insensitive';
+          };
+        };
+      };
+    } = {
       private: false,
       startAt: {
         gte: new Date(), // Only future events
