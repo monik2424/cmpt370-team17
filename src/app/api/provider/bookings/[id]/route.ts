@@ -20,8 +20,9 @@ const updateBookingSchema = z.object({
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
     const user = session?.user as any;
@@ -54,7 +55,7 @@ export async function PUT(
 
     // Find the booking
     const booking = await db.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!booking) {
@@ -98,7 +99,7 @@ export async function PUT(
 
     // Update booking status
     const updatedBooking = await db.booking.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         bookingStatus: data.bookingStatus,
       },
