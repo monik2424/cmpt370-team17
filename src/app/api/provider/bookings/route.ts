@@ -55,21 +55,14 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get('status');
 
-    // Build where clause
-    const whereClause: {
-      providerId: string;
-      bookingStatus?: string;
-    } = {
-      providerId: provider.id,
-    };
-
-    if (statusFilter && ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(statusFilter)) {
-      whereClause.bookingStatus = statusFilter;
-    }
-
-    // Fetch bookings with related data
+    // Build where clause - construct directly in findMany to avoid type issues
     const bookings = await db.booking.findMany({
-      where: whereClause,
+      where: {
+        providerId: provider.id,
+        ...(statusFilter && ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(statusFilter) 
+          ? { bookingStatus: statusFilter as 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' }
+          : {}),
+      },
       include: {
         event: {
           select: {
