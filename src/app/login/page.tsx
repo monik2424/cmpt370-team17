@@ -38,8 +38,18 @@ export default function LoginPage() {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+    } catch (err: any) {
+      // NextAuth v5 throws CredentialsSignin error for invalid credentials
+      if (err?.message?.includes('CredentialsSignin') || err?.name === 'CredentialsSignin') {
+        if (formData.loginType === 'provider') {
+          setError('Invalid credentials or you do not have a provider account');
+        } else {
+          setError('Invalid email or password');
+        }
+      } else {
+        console.error('Login error:', err);
+        setError('An error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
