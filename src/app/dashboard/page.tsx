@@ -196,12 +196,12 @@ export default async function DashboardPage() {
                 {user.image ? (
                   <img 
                     src={user.image} 
-                    alt={user.name} 
+                    alt={user.name || 'User'} 
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <span className="text-2xl font-bold text-white">
-                    {getInitials(user.name)}
+                    {getInitials(user.name || 'U')}
                   </span>
                 )}
               </div>
