@@ -82,19 +82,18 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
-        token.loginType = (user as any).loginType;
-        token.isProvider = (user as any).isProvider;
+        token.role = (user as { role?: string }).role;
+        token.loginType = (user as { loginType?: string }).loginType;
+        token.isProvider = (user as { isProvider?: boolean }).isProvider;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
-        (session.user as any).loginType = token.loginType;
-        (session.user as any).isProvider = token.isProvider;
-
+        (session.user as { id?: string }).id = token.id as string;
+        (session.user as { role?: string }).role = token.role as string;
+        (session.user as { loginType?: string }).loginType = token.loginType as string;
+        (session.user as { isProvider?: boolean }).isProvider = token.isProvider as boolean;
       }
       return session;
     }

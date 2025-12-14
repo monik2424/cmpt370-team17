@@ -267,7 +267,7 @@ export default function EventCreateForm() {
     disabled={loading}
   />
   <p className="text-xs text-gray-500 mt-1">
-    Street number and name(Eg. "105 Administration Pl").
+    Street number and name(Eg. &quot;105 Administration Pl&quot;).
   </p>
 </div>
 

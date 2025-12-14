@@ -520,7 +520,7 @@ export default async function DashboardPage() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="font-medium text-white">{booking.provider.businessName}</h4>
+                          <h4 className="font-medium text-white">{booking.provider?.businessName || 'Unknown Provider'}</h4>
                           <p className="text-sm text-slate-400 mt-1">
                             For: {booking.event.name}
                           </p>
